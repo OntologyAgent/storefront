@@ -66,7 +66,12 @@ const config = {
 
 	// Next.js 16.3 — prefetch one reusable loading shell per route (not per link).
 	// See: https://nextjs.org/blog/next-16-3-instant-navigations
-	partialPrefetching: true,
+	//
+	// [本机部署补丁 2026-11-02] 关掉：自托管 `next start` + cacheComponents 下，
+	// 该开关会让"从缓存壳 resume"的响应永不结束（HTML 发完但 res.end() 不被调用，
+	// 第二次起所有 PPR 页面挂死）。关掉后 resume 正常收尾，PPR/缓存不受影响。
+	// 验证记录见 /opt/saleor/DEPLOY.md「已知事项 2」。
+	partialPrefetching: false,
 
 	// Named cacheLife tiers for `"use cache"` — see src/lib/saleor/cache/life-profiles.ts
 	cacheLife: paperCacheLifeProfiles,
