@@ -6,6 +6,7 @@ import { AnnouncementBarSkeleton } from "@/ui/sections/announcement-bar/announce
 import { ScrollToTopOnNavigate } from "@/ui/components/shared/scroll-to-top-on-navigate";
 import { AnnouncementBarSlot, CartDrawerSlot } from "./browse-chrome-slots";
 import { MainChrome } from "./main-chrome";
+import { AgeGate } from "@/ui/components/age-gate";
 
 // Define the title template here so it cascades to every browse page (products, search,
 // categories, …) — a plain-string title would not propagate the brand suffix to children.
@@ -33,6 +34,7 @@ export default function RootLayout({ children, params }: LayoutProps) {
 			<Suspense fallback={<AnnouncementBarSkeleton />}>
 				<AnnouncementBarSlot params={params} />
 			</Suspense>
+			<AgeGate />
 			<StorefrontProviders>
 				<MainChrome params={params}>{children}</MainChrome>
 				<Suspense fallback={null}>
