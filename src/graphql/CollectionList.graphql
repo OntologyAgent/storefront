@@ -1,0 +1,20 @@
+# Every collection published in the channel — powers the `/collections` index.
+# Kept deliberately thin (no product nodes) so the index stays one cheap round trip.
+query CollectionList($channel: String!, $first: Int = 100, $languageCode: LanguageCodeEnum!) {
+	collections(first: $first, channel: $channel) {
+		edges {
+			node {
+				id
+				slug
+				name
+				products(first: 1) {
+					totalCount
+				}
+				translation(languageCode: $languageCode) {
+					name
+					slug
+				}
+			}
+		}
+	}
+}

@@ -54,6 +54,29 @@ function sizeIdentity(size: string | { name: string; slug?: string }): { value: 
 	return { value: size.slug || normalizeFacetValueSlug(size.name), name: size.name };
 }
 
+/**
+ * Brand facet options, derived from the current page sample. Saleor values are the
+ * brand attribute value names ("Marlboro"), slugged on the way into the URL.
+ */
+export function extractBrandOptions(products: ProductCardData[], selectedBrands: string[] = []): FilterOption[] {
+	const map = new Map<string, { name: string; count: number }>();
+	for (const product of products) {
+		const brand = product.brand?.trim();
+		if (!brand) continue;
+		const value = normalizeFacetValueSlug(brand);
+		const existing = map.get(value);
+		if (existing) existing.count++;
+		else map.set(value, { name: brand, count: 1 });
+	}
+	for (const token of selectedBrands) {
+		const value = normalizeFacetValueSlug(token);
+		if (!map.has(value)) map.set(value, { name: token, count: 0 });
+	}
+	return Array.from(map.entries())
+		.map(([value, { name, count }]) => ({ name, value, count }))
+		.sort((a, b) => a.name.localeCompare(b.name));
+}
+
 export function extractColorOptions(products: ProductCardData[], selectedColors?: string[]): FilterOption[] {
 	const map = new Map<string, { name: string; count: number; hex?: string }>();
 	for (const product of products) {
@@ -146,6 +169,7 @@ export function sortProductsClientSide<T extends { price: number; createdAt?: st
 }
 
 export function buildActiveFilters(filters: {
+	brands?: string[];
 	colors?: string[];
 	sizes?: string[];
 	priceRange?: string | null;
@@ -153,6 +177,15 @@ export function buildActiveFilters(filters: {
 	sizeLabels?: Record<string, string>;
 }): ActiveFilter[] {
 	const active: ActiveFilter[] = [];
+	filters.brands?.forEach((brand) => {
+		const value = normalizeFacetValueSlug(brand);
+		active.push({
+			key: "brand",
+			label: "Brand",
+			value,
+			displayValue: value,
+		});
+	});
 	filters.colors?.forEach((color) => {
 		const value = normalizeFacetValueSlug(color);
 		active.push({

@@ -35,7 +35,7 @@ const SORT_OPTIONS = [
 	"bestselling",
 ] as const satisfies readonly SortOption[];
 
-type FilterLabelKey = "category" | "color" | "size" | "price";
+type FilterLabelKey = "category" | "brand" | "color" | "size" | "price";
 
 export type { FilterLabelKey };
 
@@ -81,16 +81,19 @@ interface FilterBarProps {
 	onClearFilters?: () => void;
 	// Filter options
 	categoryOptions?: readonly CategoryFilterOption[];
+	brandOptions?: readonly FilterOption[];
 	colorOptions?: readonly FilterOption[];
 	sizeOptions?: readonly FilterOption[];
 	priceRanges?: readonly { label: string; value: string; count: number }[];
 	// Selected filters
 	selectedCategories?: readonly string[];
+	selectedBrands?: readonly string[];
 	selectedColors?: readonly string[];
 	selectedSizes?: readonly string[];
 	selectedPriceRange?: string | null;
 	// Filter handlers
 	onCategoryToggle?: (slug: string) => void;
+	onBrandToggle?: (brand: string) => void;
 	onColorToggle?: (color: string) => void;
 	onSizeToggle?: (size: string) => void;
 	onPriceRangeChange?: (range: string | null) => void;
@@ -105,14 +108,17 @@ export function FilterBar({
 	onRemoveFilter,
 	onClearFilters,
 	categoryOptions = [],
+	brandOptions = [],
 	colorOptions = [],
 	sizeOptions = [],
 	priceRanges = [],
 	selectedCategories = [],
+	selectedBrands = [],
 	selectedColors = [],
 	selectedSizes = [],
 	selectedPriceRange = null,
 	onCategoryToggle,
+	onBrandToggle,
 	onColorToggle,
 	onSizeToggle,
 	onPriceRangeChange,
@@ -124,10 +130,18 @@ export function FilterBar({
 	const filterLabel = (key: FilterLabelKey) => tFilter(key);
 
 	const hasFilters =
-		categoryOptions.length > 0 || colorOptions.length > 0 || sizeOptions.length > 0 || priceRanges.length > 0;
+		categoryOptions.length > 0 ||
+		brandOptions.length > 0 ||
+		colorOptions.length > 0 ||
+		sizeOptions.length > 0 ||
+		priceRanges.length > 0;
 
 	const activeFilterCount =
-		selectedCategories.length + selectedColors.length + selectedSizes.length + (selectedPriceRange ? 1 : 0);
+		selectedCategories.length +
+		selectedBrands.length +
+		selectedColors.length +
+		selectedSizes.length +
+		(selectedPriceRange ? 1 : 0);
 
 	return (
 		<div className="sticky top-16 z-30 border-b border-border bg-background">
@@ -340,6 +354,43 @@ export function FilterBar({
 											{category.name}
 										</DropdownMenuCheckboxItem>
 									))}
+								</DropdownMenuContent>
+							</DropdownMenu>
+						)}
+
+						{/* Brand Filter */}
+						{brandOptions.length > 0 && onBrandToggle && (
+							<DropdownMenu>
+								<DropdownMenuTrigger asChild>
+									<Button
+										variant="outline-solid"
+										size="sm"
+										className="hidden shrink-0 bg-transparent md:flex"
+									>
+										{filterLabel("brand")}
+										{selectedBrands.length > 0 && (
+											<Badge variant="secondary" className="ml-2 h-5 px-1.5 py-0 text-xs">
+												{selectedBrands.length}
+											</Badge>
+										)}
+										<ChevronDown className="ml-1.5 h-4 w-4 opacity-50" />
+									</Button>
+								</DropdownMenuTrigger>
+								<DropdownMenuContent align="start" className="max-h-72 w-56 overflow-y-auto">
+									<DropdownMenuLabel>{filterLabel("brand")}</DropdownMenuLabel>
+									<DropdownMenuSeparator />
+									{brandOptions.map((option) => {
+										const value = optionValue(option);
+										return (
+											<DropdownMenuCheckboxItem
+												key={value}
+												checked={selectedBrands.includes(value)}
+												onCheckedChange={() => onBrandToggle(value)}
+											>
+												<span className="flex-1">{option.name}</span>
+											</DropdownMenuCheckboxItem>
+										);
+									})}
 								</DropdownMenuContent>
 							</DropdownMenu>
 						)}

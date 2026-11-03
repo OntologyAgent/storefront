@@ -128,10 +128,12 @@ function PlpListingInteractive({
 	const {
 		filteredProducts,
 		categoryOptions,
+		brandOptions: _brandOptions,
 		colorOptions,
 		sizeOptions,
 		priceRanges,
 		selectedCategories,
+		selectedBrands: _selectedBrands,
 		selectedColors,
 		selectedSizes,
 		selectedPriceRange,
@@ -140,6 +142,7 @@ function PlpListingInteractive({
 		resultCount,
 		isPending,
 		handleCategoryToggle,
+		handleBrandToggle: _handleBrandToggle,
 		handleColorToggle,
 		handleSizeToggle,
 		handlePriceRangeChange,
@@ -164,6 +167,7 @@ function PlpListingInteractive({
 					sortOptions={sortOptions}
 					onSortChange={handleSortChange}
 					categoryOptions={enableCategoryFilter ? categoryOptions : undefined}
+
 					colorOptions={colorOptions}
 					sizeOptions={sizeOptions}
 					priceRanges={priceRanges}

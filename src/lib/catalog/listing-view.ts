@@ -3,6 +3,7 @@ export type ListingViewParams = {
 	direction?: string | string[];
 	sort?: string;
 	price?: string;
+	brands?: string;
 	colors?: string;
 	sizes?: string;
 	categories?: string;
@@ -22,6 +23,7 @@ export function isCacheableListingView(params: ListingViewParams): boolean {
 		!params.page &&
 		!params.query &&
 		!params.price &&
+		!params.brands &&
 		!params.colors &&
 		!params.sizes &&
 		!params.categories

@@ -6,6 +6,7 @@ import { parseFacetParam } from "@/config/facets";
 import type { SortOption, ActiveFilter } from "./filter-bar";
 import type { ProductCardData } from "./product-card-data";
 import {
+	extractBrandOptions,
 	extractColorOptions,
 	extractSizeOptions,
 	extractCategoryOptions,
@@ -32,12 +33,14 @@ interface UseProductFiltersResult {
 	// Filter options for UI
 	categoryOptions: CategoryOption[];
 	colorOptions: Array<{ name: string; value?: string; count: number; hex?: string }>;
+	brandOptions: Array<{ name: string; value?: string; count: number }>;
 	sizeOptions: Array<{ name: string; value?: string; count: number }>;
 	priceRanges: typeof STATIC_PRICE_RANGES_WITH_COUNT;
 
 	// Selected filter values (optimistic while navigation is pending)
 	selectedCategories: string[];
 	selectedColors: string[];
+	selectedBrands: string[];
 	selectedSizes: string[];
 	selectedPriceRange: string | null;
 	sortValue: SortOption;
@@ -54,6 +57,7 @@ interface UseProductFiltersResult {
 	// Handlers
 	handleCategoryToggle: (slug: string) => void;
 	handleColorToggle: (color: string) => void;
+	handleBrandToggle: (brand: string) => void;
 	handleSizeToggle: (size: string) => void;
 	handlePriceRangeChange: (range: string | null) => void;
 	handleSortChange: (sort: SortOption) => void;
@@ -83,17 +87,20 @@ export function useProductFilters({
 		[searchParams, enableCategoryFilter],
 	);
 	const urlColors = useMemo(() => parseFacetParam(searchParams.get("colors")), [searchParams]);
+	const urlBrands = useMemo(() => parseFacetParam(searchParams.get("brands")), [searchParams]);
 	const urlSizes = useMemo(() => parseFacetParam(searchParams.get("sizes")), [searchParams]);
 	const urlPriceRange = searchParams.get("price") || null;
 	const sortValue = (searchParams.get("sort") as SortOption) || "featured";
 
 	const [optimisticCategories, setOptimisticCategories] = useOptimistic(urlCategories);
 	const [optimisticColors, setOptimisticColors] = useOptimistic(urlColors);
+	const [optimisticBrands, setOptimisticBrands] = useOptimistic(urlBrands);
 	const [optimisticSizes, setOptimisticSizes] = useOptimistic(urlSizes);
 	const [optimisticPriceRange, setOptimisticPriceRange] = useOptimistic(urlPriceRange);
 
 	const selectedCategories = enableCategoryFilter ? optimisticCategories : [];
 	const selectedColors = optimisticColors;
+	const selectedBrands = optimisticBrands;
 	const selectedSizes = optimisticSizes;
 	const selectedPriceRange = optimisticPriceRange;
 
@@ -101,6 +108,7 @@ export function useProductFilters({
 		(updates: {
 			categories?: string[];
 			colors?: string[];
+			brands?: string[];
 			sizes?: string[];
 			price?: string | null;
 			sort?: string;
@@ -120,6 +128,14 @@ export function useProductFilters({
 					params.set("colors", [...updates.colors].sort().join(","));
 				} else {
 					params.delete("colors");
+				}
+			}
+
+			if (updates.brands !== undefined) {
+				if (updates.brands.length > 0) {
+					params.set("brands", [...updates.brands].sort().join(","));
+				} else {
+					params.delete("brands");
 				}
 			}
 
@@ -151,6 +167,7 @@ export function useProductFilters({
 			if (
 				updates.categories !== undefined ||
 				updates.colors !== undefined ||
+				updates.brands !== undefined ||
 				updates.sizes !== undefined ||
 				updates.price !== undefined
 			) {
@@ -162,6 +179,7 @@ export function useProductFilters({
 			startTransition(() => {
 				if (updates.categories !== undefined) setOptimisticCategories(updates.categories);
 				if (updates.colors !== undefined) setOptimisticColors(updates.colors);
+				if (updates.brands !== undefined) setOptimisticBrands(updates.brands);
 				if (updates.sizes !== undefined) setOptimisticSizes(updates.sizes);
 				if (updates.price !== undefined) setOptimisticPriceRange(updates.price);
 				router.push(queryString ? `${pathname}?${queryString}` : pathname, { scroll: false });
@@ -174,6 +192,7 @@ export function useProductFilters({
 			startTransition,
 			setOptimisticCategories,
 			setOptimisticColors,
+			setOptimisticBrands,
 			setOptimisticSizes,
 			setOptimisticPriceRange,
 		],
@@ -197,6 +216,16 @@ export function useProductFilters({
 			updateFilters({ colors: newColors });
 		},
 		[selectedColors, updateFilters],
+	);
+
+	const handleBrandToggle = useCallback(
+		(brand: string) => {
+			const newBrands = selectedBrands.includes(brand)
+				? selectedBrands.filter((b) => b !== brand)
+				: [...selectedBrands, brand];
+			updateFilters({ brands: newBrands });
+		},
+		[selectedBrands, updateFilters],
 	);
 
 	const handleSizeToggle = useCallback(
@@ -234,6 +263,8 @@ export function useProductFilters({
 					const newCategories = selectedCategories.filter((c) => c !== category.slug);
 					updateFilters({ categories: newCategories });
 				}
+			} else if (key === "brand") {
+				updateFilters({ brands: selectedBrands.filter((b) => b !== value) });
 			} else if (key === "color") {
 				updateFilters({ colors: selectedColors.filter((c) => c !== value) });
 			} else if (key === "size") {
@@ -242,13 +273,14 @@ export function useProductFilters({
 				updateFilters({ price: null });
 			}
 		},
-		[resolvedCategories, categoryOptions, selectedCategories, selectedColors, selectedSizes, updateFilters],
+		[resolvedCategories, categoryOptions, selectedCategories, selectedColors, selectedBrands, selectedSizes, updateFilters],
 	);
 
 	const handleClearFilters = useCallback(() => {
 		startTransition(() => {
 			setOptimisticCategories([]);
 			setOptimisticColors([]);
+			setOptimisticBrands([]);
 			setOptimisticSizes([]);
 			setOptimisticPriceRange(null);
 			const query = searchParams.get("query");
@@ -264,6 +296,7 @@ export function useProductFilters({
 		startTransition,
 		setOptimisticCategories,
 		setOptimisticColors,
+		setOptimisticBrands,
 		setOptimisticSizes,
 		setOptimisticPriceRange,
 	]);
@@ -273,6 +306,7 @@ export function useProductFilters({
 		[products, selectedColors],
 	);
 	const sizeOptions = useMemo(() => extractSizeOptions(products, selectedSizes), [products, selectedSizes]);
+	const brandOptions = useMemo(() => extractBrandOptions(products, selectedBrands), [products, selectedBrands]);
 
 	// Server already applied attribute/category/price filters — only sort as a fallback
 	const filteredProducts = useMemo(() => sortProductsClientSide(products, sortValue), [products, sortValue]);
@@ -297,6 +331,7 @@ export function useProductFilters({
 
 	const activeFilters = useMemo(() => {
 		const filters = buildActiveFilters({
+			brands: selectedBrands,
 			colors: selectedColors,
 			sizes: selectedSizes,
 			priceRange: selectedPriceRange,
@@ -309,7 +344,7 @@ export function useProductFilters({
 		});
 
 		return filters;
-	}, [selectedColors, selectedSizes, selectedPriceRange, resolvedCategories, colorLabels, sizeLabels]);
+	}, [selectedBrands, selectedColors, selectedSizes, selectedPriceRange, resolvedCategories, colorLabels, sizeLabels]);
 
 	const resultCount = totalCount ?? filteredProducts.length;
 
@@ -317,10 +352,12 @@ export function useProductFilters({
 		filteredProducts,
 		categoryOptions,
 		colorOptions,
+		brandOptions,
 		sizeOptions,
 		priceRanges: STATIC_PRICE_RANGES_WITH_COUNT,
 		selectedCategories,
 		selectedColors,
+		selectedBrands,
 		selectedSizes,
 		selectedPriceRange,
 		sortValue,
@@ -329,6 +366,7 @@ export function useProductFilters({
 		resultCount,
 		handleCategoryToggle,
 		handleColorToggle,
+		handleBrandToggle,
 		handleSizeToggle,
 		handlePriceRangeChange,
 		handleSortChange,

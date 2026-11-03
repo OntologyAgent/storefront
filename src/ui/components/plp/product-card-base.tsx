@@ -25,7 +25,7 @@ export function ProductCardBase({
 }: ProductCardBaseProps) {
 	return (
 		<article className="group">
-			<div className="relative mb-4 aspect-[3/4] overflow-hidden rounded-card bg-secondary">
+			<div className="relative mb-4 aspect-[3/4] overflow-hidden rounded-card bg-secondary/60 p-4 sm:p-5">
 				<ProductCardLink href={product.href} className="absolute inset-0 z-0 block" aria-label={product.name}>
 					<SaleorImage
 						src={product.image}
@@ -33,7 +33,7 @@ export function ProductCardBase({
 						alt={product.imageAlt || product.name}
 						sizes={imageSizes}
 						className={cn(
-							"object-cover transition-all duration-500 ease-out md:group-hover:scale-105",
+							"object-contain transition-all duration-500 ease-out md:group-hover:scale-105",
 							product.hoverImage && "md:group-hover:opacity-0",
 						)}
 						priority={priority}
@@ -46,7 +46,7 @@ export function ProductCardBase({
 							fill
 							sizes={imageSizes}
 							quality={PRODUCT_IMAGE_QUALITY}
-							className="object-cover opacity-0 transition-all duration-500 ease-out md:group-hover:scale-105 md:group-hover:opacity-100"
+							className="object-contain opacity-0 transition-all duration-500 ease-out md:group-hover:scale-105 md:group-hover:opacity-100"
 						/>
 					)}
 				</ProductCardLink>

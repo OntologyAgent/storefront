@@ -43,6 +43,18 @@ export type PlpFacetConfig = {
 
 export const PLP_FACETS: readonly PlpFacetConfig[] = [
 	{
+		param: "brands",
+		id: "brands",
+		labelKey: "brand",
+		attributeSlug: "brand",
+		attributeAliases: [],
+		control: "chip",
+		source: {
+			saleor: { attributes: ["brand"] },
+			fixture: { field: "brand" },
+		},
+	},
+	{
 		param: "colors",
 		id: "colors",
 		labelKey: "colors",

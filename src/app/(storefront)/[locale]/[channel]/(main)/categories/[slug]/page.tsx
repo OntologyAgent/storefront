@@ -34,19 +34,21 @@ type PageProps = {
 export const generateMetadata = async (props: PageProps): Promise<Metadata> => {
 	const params = await props.params;
 	const category = await getCategoryData(params.slug, params.channel, params.locale);
-	const plainDescription = parseEditorJSToText(category?.description);
+
+	// Soft-404 guard (see collections/[slug]): noindex instead of a canonical 200 page.
+	if (!category) {
+		return { title: "Category not found", robots: { index: false, follow: false } };
+	}
+
+	const plainDescription = parseEditorJSToText(category.description);
 
 	return buildBrowsePageMetadata({
-		title: category?.seoTitle || category?.name || "Category",
-		description: category?.seoDescription || plainDescription || category?.name,
+		title: category.seoTitle || category.name || "Category",
+		description: category.seoDescription || plainDescription || category.name,
 		locale: params.locale,
 		channel: params.channel,
-		pathSuffix: category
-			? catalogPathSuffix("categories", category)
-			: `/categories/${encodeURIComponent(params.slug)}`,
-		pathSuffixByLocale: category
-			? buildCatalogPathSuffixByLocale("categories", buildLocaleSlugMap(category))
-			: undefined,
+		pathSuffix: catalogPathSuffix("categories", category),
+		pathSuffixByLocale: buildCatalogPathSuffixByLocale("categories", buildLocaleSlugMap(category)),
 	});
 };
 

@@ -5,6 +5,7 @@ import type { ListingViewParams } from "@/lib/catalog/listing-view";
 import { loadListing } from "@/lib/listing/policy";
 import { toListingPayload } from "@/lib/listing/payload";
 import { listingQueryFromInput } from "@/lib/listing/query";
+import { sortProductsForDisplay } from "@/config/merchandising";
 
 export async function loadListingView(input: {
 	surface: ListingSurface;
@@ -16,5 +17,14 @@ export async function loadListingView(input: {
 	const query = listingQueryFromInput(input);
 	if (!query) return null;
 	const result = await loadListing(query);
-	return result ? toListingPayload(result) : null;
+	if (!result) return null;
+	const payload = toListingPayload(result);
+
+	// The default grid is the storefront's merchandised surface: push products with
+	// unpresentable photography to the end. Explicit customer sorts are left untouched.
+	if (!input.view.sort || input.view.sort === "featured") {
+		payload.products = sortProductsForDisplay(payload.products);
+	}
+
+	return payload;
 }

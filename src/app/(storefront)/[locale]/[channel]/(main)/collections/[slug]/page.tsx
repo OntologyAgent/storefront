@@ -33,19 +33,23 @@ type PageProps = {
 export const generateMetadata = async (props: PageProps): Promise<Metadata> => {
 	const params = await props.params;
 	const collection = await getCollectionData(params.slug, params.channel, params.locale);
-	const plainDescription = parseEditorJSToText(collection?.description);
+
+	// A missing collection still renders the not-found UI, but `cacheComponents` (PPR)
+	// has already flushed a 200 shell, so the status code cannot be corrected here.
+	// Keep soft-404s out of the index instead: no canonical, no hreflang, no snippets.
+	if (!collection) {
+		return { title: "Collection not found", robots: { index: false, follow: false } };
+	}
+
+	const plainDescription = parseEditorJSToText(collection.description);
 
 	return buildBrowsePageMetadata({
-		title: collection?.seoTitle || collection?.name || "Collection",
-		description: collection?.seoDescription || plainDescription || collection?.name,
+		title: collection.seoTitle || collection.name || "Collection",
+		description: collection.seoDescription || plainDescription || collection.name,
 		locale: params.locale,
 		channel: params.channel,
-		pathSuffix: collection
-			? catalogPathSuffix("collections", collection)
-			: `/collections/${encodeURIComponent(params.slug)}`,
-		pathSuffixByLocale: collection
-			? buildCatalogPathSuffixByLocale("collections", buildLocaleSlugMap(collection))
-			: undefined,
+		pathSuffix: catalogPathSuffix("collections", collection),
+		pathSuffixByLocale: buildCatalogPathSuffixByLocale("collections", buildLocaleSlugMap(collection)),
 	});
 };
 
