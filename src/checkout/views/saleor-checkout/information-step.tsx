@@ -38,6 +38,7 @@ import {
 } from "@/checkout/lib/shipping-address-submit";
 import { useCheckoutAvailability } from "@/checkout/providers/checkout-availability";
 import { useCheckoutStepNumber } from "@/checkout/hooks/use-checkout-steps";
+import { PICKUP_ONLY } from "@/checkout/lib/pickup";
 import { useTranslations } from "next-intl";
 
 // Extracted components
@@ -114,6 +115,8 @@ const InformationStepForm: FC<InformationStepFormProps> = ({
 	const tAccount = useTranslations("account.errors");
 	const { setAvailabilityIssue } = useCheckoutAvailability();
 	const infoStep = useCheckoutStepNumber("INFO", checkout.isShippingRequired);
+	// 只做门店自提时，客户不需要填收货地址：地址由所选门店提供（见 shipping-step）。
+	const needsShippingAddress = checkout.isShippingRequired && !PICKUP_ONLY;
 	const {
 		isOrphaned,
 		isRecovering,
@@ -291,7 +294,7 @@ const InformationStepForm: FC<InformationStepFormProps> = ({
 			}
 
 			// Validate shipping address (if required)
-			if (checkout.isShippingRequired) {
+			if (needsShippingAddress) {
 				const usingSavedAddress = isUsingSavedShippingAddress({
 					isAuthenticated: authenticated,
 					savedAddressCount: user?.addresses?.length ?? 0,
@@ -381,7 +384,7 @@ const InformationStepForm: FC<InformationStepFormProps> = ({
 					}
 				}
 
-				if (checkout.isShippingRequired) {
+				if (needsShippingAddress) {
 					let addressInput;
 					const usingSavedAddress = isUsingSavedShippingAddress({
 						isAuthenticated: authenticated,
@@ -567,7 +570,7 @@ const InformationStepForm: FC<InformationStepFormProps> = ({
 				onSubscribeChange={setSubscribeNews}
 			/>
 
-			{checkout.isShippingRequired && (
+			{needsShippingAddress && (
 				<ShippingAddressSection
 					isLoading={isAuthTransitionLoading}
 					isAuthenticated={authenticated}
@@ -600,7 +603,7 @@ const InformationStepForm: FC<InformationStepFormProps> = ({
 
 			<MobileStickyAction
 				step={infoStep}
-				isShippingRequired={checkout.isShippingRequired}
+				isShippingRequired={needsShippingAddress}
 				type="submit"
 				onAction={handleSubmit}
 				isLoading={isSubmitting}

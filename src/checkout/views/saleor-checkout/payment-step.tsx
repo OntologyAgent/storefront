@@ -27,6 +27,7 @@ import { LoadingSpinner } from "@/checkout/ui-kit/loading-spinner";
 import { getFormattedMoney, formatMoneyWithFallback } from "@/checkout/lib/utils/money";
 import { AuthorizedPaymentRecovery } from "@/checkout/components/payment/stripe/authorized-payment-recovery";
 import { isCheckoutFreeOrder } from "@/checkout/lib/payment/checkout-pay-amount";
+import { isPayAtStoreCheckout } from "@/checkout/lib/payment/pay-at-store";
 import { shouldShowPaymentMethodArea } from "@/checkout/lib/payment/should-show-payment-method-area";
 import { usesClientPaymentSubmit } from "@/checkout/lib/payment";
 import { consumePaymentCompletionError } from "@/checkout/lib/payment/checkout-payment-completion";
@@ -103,8 +104,10 @@ export const PaymentStep: FC<PaymentStepProps> = ({
 		authenticated,
 	});
 
-	const usesClientSubmit = usesClientPaymentSubmit(provider);
 	const isFreeOrder = isCheckoutFreeOrder(checkout);
+	const payAtStore = isPayAtStoreCheckout(checkout);
+	// 到店付款不经过任何支付网关：强制走服务端 checkoutComplete 的提交按钮。
+	const usesClientSubmit = usesClientPaymentSubmit(provider) && !payAtStore;
 
 	const handlePaymentError = useCallback(
 		(message: string) => {
@@ -175,6 +178,10 @@ export const PaymentStep: FC<PaymentStepProps> = ({
 		return fieldErrors;
 	}, [errors]);
 
+	const placeOrderLabel = payAtStore
+		? "Confirm order · Pay at pickup"
+		: buttonText;
+
 	const isDisabled =
 		isLoading || hasInvalidDelivery || Boolean(availabilityIssue) || (!canSubmit && !isFreeOrder);
 
@@ -220,13 +227,13 @@ export const PaymentStep: FC<PaymentStepProps> = ({
 				</div>
 			)}
 
-			<PaymentGatewayAlerts gateways={checkout.availablePaymentGateways} />
+			{payAtStore ? null : <PaymentGatewayAlerts gateways={checkout.availablePaymentGateways} />}
 
 			{usesClientSubmit && !isFreeOrder ? (
 				<AuthorizedPaymentRecovery checkout={checkout} onError={handlePaymentError} />
 			) : null}
 
-			{usesClientSubmit ? (
+			{usesClientSubmit && !payAtStore ? (
 				<BillingAddressSection
 					billingAddress={checkout.billingAddress}
 					shippingAddress={shippingAddress}
@@ -240,6 +247,16 @@ export const PaymentStep: FC<PaymentStepProps> = ({
 					initialSameAsShipping={sameAsBilling}
 					disabled={isPaymentBusy}
 				/>
+			) : null}
+
+			{payAtStore ? (
+				<div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4">
+					<p className="font-medium text-emerald-900">Pay when you collect</p>
+					<p className="mt-1 text-sm text-emerald-800">
+						No online payment needed. Place the order and pay at the store when you pick it
+						up.
+					</p>
+				</div>
 			) : null}
 
 			<PaymentError message={errors.payment || returnError || undefined} />
@@ -263,7 +280,7 @@ export const PaymentStep: FC<PaymentStepProps> = ({
 				/>
 			) : null}
 
-			{!usesClientSubmit ? (
+			{!usesClientSubmit && !payAtStore ? (
 				<BillingAddressSection
 					billingAddress={checkout.billingAddress}
 					shippingAddress={shippingAddress}
@@ -295,10 +312,10 @@ export const PaymentStep: FC<PaymentStepProps> = ({
 							{isLoading ? (
 								<span className="flex items-center gap-2">
 									<LoadingSpinner />
-									{buttonText}
+									{placeOrderLabel}
 								</span>
 							) : (
-								buttonText
+								placeOrderLabel
 							)}
 						</Button>
 					</div>

@@ -28,6 +28,8 @@ import { useCheckoutGatewayMessages } from "@/checkout/hooks/use-checkout-gatewa
 import { useCheckoutPaymentMessages } from "@/checkout/hooks/use-checkout-payment-messages";
 import { useCheckoutAvailability } from "@/checkout/providers/checkout-availability";
 import { validateCheckoutFulfillment } from "@/checkout/lib/validate-checkout-fulfillment";
+import { finalizeCheckoutOrder } from "@/checkout/lib/payment/finalize-checkout-order";
+import { isPayAtStoreCheckout } from "@/checkout/lib/payment/pay-at-store";
 
 type UseCheckoutPaymentParams = {
 	checkout: CheckoutFragment;
@@ -93,8 +95,36 @@ export function useCheckoutPayment({
 			let orderPlaced = false;
 
 			const displayedAmount = getCheckoutPayAmount(checkout);
+			const payAtStore = isPayAtStoreCheckout(checkout);
 
 			try {
+				// 到店付款：账单地址已在选自提门店时写入，这里直接校验履约信息并下单。
+				if (payAtStore) {
+					const live = (await refreshCheckout()) ?? checkout;
+					const fulfillment = await validateCheckoutFulfillment(
+						live,
+						paymentMessages.fulfillmentCheckFailed,
+						{ skipAddressResubmit: true },
+					);
+					if (!fulfillment.ok) {
+						if (fulfillment.reason === "availability") {
+							setAvailabilityIssue(fulfillment.issue);
+						} else {
+							setErrors({ payment: fulfillment.error });
+						}
+						return;
+					}
+
+					markPaymentCompleting(live.id);
+					const finalized = await finalizeCheckoutOrder(live.id, live.channel.slug);
+					if (!finalized.ok) {
+						setErrors({ payment: finalized.error });
+						return;
+					}
+					orderPlaced = true;
+					return;
+				}
+
 				const billingResult = await updateCheckoutBilling({
 					checkoutId: checkout.id,
 					sameAsBilling,
@@ -222,7 +252,7 @@ export function useCheckoutPayment({
 		setPriceChangeNotice: setPriceChangeNoticeState,
 		priceChangeNotice,
 		provider,
-		canSubmit: canSubmitPayment(provider),
+		canSubmit: canSubmitPayment(provider) || isPayAtStoreCheckout(checkout),
 		isProcessing,
 		isPaymentProcessing: isProcessing,
 		isCompletingOrder: isProcessing,

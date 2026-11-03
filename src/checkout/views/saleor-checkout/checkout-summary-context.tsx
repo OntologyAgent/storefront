@@ -68,7 +68,10 @@ export function formatAddressLine(address: CheckoutFragment["shippingAddress"]):
 /** Get shipping method display string */
 export function formatShippingMethod(checkout: CheckoutFragment): string {
 	const delivery = checkout.delivery;
-	if (!delivery?.shippingMethod) return "—";
+	if (!delivery?.shippingMethod) {
+		// 门店自提：Saleor 把仓库放进 deliveryMethod，`delivery` 本身是空的。
+		return "Collect in store";
+	}
 
 	const priceStr = formatShippingPrice(checkout.shippingPrice?.gross);
 
