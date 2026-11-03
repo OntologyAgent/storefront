@@ -7,6 +7,7 @@ import { resolveLocaleFromSlug } from "@/config/locale";
 import { orderStatusStyle, defaultStatusStyle } from "./order-status-config";
 import { type OrderRowLabels } from "./order-row-labels";
 import { accountRoutes } from "./routes";
+import { pickupCodeFor } from "@/lib/pickup-code";
 
 type Props = {
 	order: OrderDetailsFragment;
@@ -22,6 +23,7 @@ export function OrderRow({ order, localeSlug, labels }: Props) {
 		.map((l) => l.variant!.product.thumbnail!)
 		.slice(0, 3);
 
+	const pickup = order.collectionPointName ? pickupCodeFor(order.number) : null;
 	const style = orderStatusStyle[order.status] ?? defaultStatusStyle;
 	const StatusIcon = style.icon;
 
@@ -59,6 +61,13 @@ export function OrderRow({ order, localeSlug, labels }: Props) {
 					{" · "}
 					{labels.itemCount}
 				</p>
+				{pickup ? (
+					<p className="mt-1 text-[13px] font-medium">
+						<span className="text-muted-foreground">Pickup </span>
+						<span className="tabular-nums tracking-wider">#{pickup.code}</span>
+						<span className="text-muted-foreground"> · {pickup.phrase}</span>
+					</p>
+				) : null}
 			</div>
 
 			<div className="flex items-center gap-4">

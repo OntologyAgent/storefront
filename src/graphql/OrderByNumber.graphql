@@ -6,6 +6,11 @@ fragment OrderFullDetails on Order {
 	statusDisplay
 	paymentStatus
 	isPaid
+	# Click & collect: the store this order is collected from.
+	collectionPointName
+	deliveryMethod {
+		__typename
+	}
 	shippingAddress {
 		...AddressDetails
 	}

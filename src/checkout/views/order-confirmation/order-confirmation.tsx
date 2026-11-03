@@ -13,6 +13,7 @@ import { Button } from "@/ui/components/ui/button";
 import { useOrder } from "@/checkout/hooks/use-order";
 import { OrderSummary } from "@/checkout/views/saleor-checkout/order-summary";
 import { OrderConfirmationPageShell } from "./order-confirmation-page-shell";
+import { pickupCodeFor } from "@/lib/pickup-code";
 import { PageNotFound } from "@/checkout/views/page-not-found";
 import { getCustomerOrderStatusLabel } from "@/lib/order-status";
 import { billingCityCountry } from "@/lib/order-view/sanitize";
@@ -93,6 +94,7 @@ export const OrderConfirmation = () => {
 	const statusLabel = getCustomerOrderStatusLabel(tStatus, order.status, order.statusDisplay);
 	const method = order.deliveryMethod && "name" in order.deliveryMethod ? order.deliveryMethod : null;
 	const days = deliveryWindow(method);
+	const pickup = order.collectionPointName ? pickupCodeFor(order.number) : null;
 	const trackingNumbers =
 		order.fulfillments
 			?.map((fulfillment) => fulfillment.trackingNumber)
@@ -109,6 +111,28 @@ export const OrderConfirmation = () => {
 									<div className="flex justify-center">
 										<CheckCircle className="h-16 w-16 text-foreground" />
 									</div>
+									{order.collectionPointName ? (
+										<div className="mx-auto mt-2 w-full max-w-sm rounded-lg border border-foreground/20 bg-secondary/40 p-5">
+											<p className="text-eyebrow uppercase text-muted-foreground">Collect in store</p>
+											<p className="mt-1 text-lg font-semibold">{order.collectionPointName}</p>
+											<p className="mt-4 text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+												Pickup code
+											</p>
+											<p className="text-3xl font-bold tabular-nums tracking-[0.28em]">
+												{pickup?.code ?? "—"}
+											</p>
+											<p className="mt-0.5 text-xs text-muted-foreground">Order #{order.number}</p>
+											{pickup ? (
+												<>
+													<p className="mt-1 text-sm text-muted-foreground">A good wish for you</p>
+													<p className="text-lg font-semibold tracking-[0.06em]">{pickup.phrase}</p>
+												</>
+											) : null}
+											<p className="mt-3 text-xs text-muted-foreground">
+												Bring this code and photo ID matching the order name. We email you when the order is packed.
+											</p>
+										</div>
+									) : null}
 									<div>
 										<p className="text-muted-foreground">{t("orderNumber", { number: order.number })}</p>
 										<h1 className="mt-1 text-balance text-h1">

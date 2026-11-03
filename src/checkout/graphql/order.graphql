@@ -92,6 +92,9 @@ fragment OrderFragment on Order {
 	deliveryMethod {
 		...ShippingFragment
 	}
+	# Set when the order is collected in store; the confirmation page renders the
+	# pickup voucher from it.
+	collectionPointName
 	total {
 		gross {
 			...Money

@@ -46,4 +46,9 @@ fragment OrderDetails on Order {
 	status
 	statusDisplay
 	paymentStatus
+	# Click & collect: set when the order is collected in store.
+	collectionPointName
+	deliveryMethod {
+		__typename
+	}
 }

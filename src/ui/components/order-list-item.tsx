@@ -3,12 +3,16 @@ import { LinkWithChannel } from "@/ui/atoms/link-with-channel";
 import { formatDate, formatMoney, getHrefForVariant } from "@/lib/utils";
 import { type OrderDetailsFragment } from "@/gql/graphql";
 import { PaymentStatus } from "@/ui/components/payment-status";
+import { pickupCodeFor } from "@/lib/pickup-code";
+import { Store } from "lucide-react";
 
 type Props = {
 	order: OrderDetailsFragment;
 };
 
 export const OrderListItem = ({ order }: Props) => {
+	const pickup = order.collectionPointName ? pickupCodeFor(order.number) : null;
+
 	return (
 		<li className="bg-card">
 			<div className="bg-muted/50 flex flex-col gap-2 border px-6 py-4 md:grid md:grid-cols-4 md:gap-8">
@@ -39,6 +43,21 @@ export const OrderListItem = ({ order }: Props) => {
 					</LinkWithChannel>
 				</div>
 			</div>
+
+			{pickup ? (
+				<div className="flex flex-wrap items-center gap-x-6 gap-y-2 border-x border-b bg-secondary/40 px-6 py-3 text-sm">
+					<span className="inline-flex items-center gap-1.5 font-medium">
+						<Store className="h-4 w-4" aria-hidden="true" />
+						Collect in store
+					</span>
+					<span className="text-muted-foreground">{order.collectionPointName}</span>
+					<span className="ml-auto tabular-nums">
+						<span className="text-muted-foreground">Pickup code </span>
+						<strong className="tracking-wider">{pickup.display}</strong>
+						<span className="text-muted-foreground"> · #{order.number}</span>
+					</span>
+				</div>
+			) : null}
 
 			{order.lines.length > 0 && (
 				<>
@@ -124,7 +143,7 @@ export const OrderListItem = ({ order }: Props) => {
 						</table>
 					</div>
 					<dl className="flex justify-between border-y py-6 text-sm font-medium text-foreground md:border md:px-6">
-						<dt>Total amount including delivery</dt>
+						<dt>Order total</dt>
 						<dd>{formatMoney(order.total.gross.amount, order.total.gross.currency)}</dd>
 					</dl>
 				</>

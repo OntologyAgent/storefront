@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import Image from "next/image";
-import { MapPin, CreditCard } from "lucide-react";
+import { MapPin, CreditCard, Store } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import { getOrdersForNumberLookup } from "@/lib/account/get-orders";
 import { hasAuthSession } from "@/lib/auth/has-auth-session";
@@ -13,6 +13,7 @@ import { OrderTimeline } from "@/ui/components/account/order-timeline";
 import { OrderStatusBadge } from "@/ui/components/account/order-status-badge";
 import { AccountOrderDetailSkeleton } from "@/ui/components/account/account-skeleton";
 import { type AddressDetailsFragment } from "@/gql/graphql";
+import { pickupCodeFor } from "@/lib/pickup-code";
 
 type Props = {
 	params: Promise<{ locale: string; number: string }>;
@@ -56,6 +57,7 @@ async function OrderDetailContent({ params }: Props) {
 
 	const itemCount = order.lines.reduce((sum, l) => sum + l.quantity, 0);
 	const placedDate = formatDate(new Date(order.created), undefined, intlLocale);
+	const pickup = order.collectionPointName ? pickupCodeFor(order.number) : null;
 
 	return (
 		<div className="space-y-6">
@@ -66,6 +68,27 @@ async function OrderDetailContent({ params }: Props) {
 				</div>
 				<OrderStatusBadge status={order.status} statusDisplay={order.statusDisplay} localeSlug={locale} />
 			</div>
+
+			{pickup ? (
+				<div className="flex flex-col gap-4 rounded-xl border border-foreground/20 bg-secondary/40 p-5 sm:flex-row sm:items-center sm:justify-between">
+					<div className="min-w-0">
+						<p className="flex items-center gap-1.5 text-eyebrow uppercase text-muted-foreground">
+							<Store className="h-4 w-4" aria-hidden="true" />
+							Collect in store
+						</p>
+						<p className="mt-1 text-lg font-semibold">{order.collectionPointName}</p>
+						<p className="mt-1 text-sm text-muted-foreground">
+							Bring photo ID matching the order name. We let you know when it is ready.
+						</p>
+					</div>
+					<div className="shrink-0 text-left sm:text-right">
+						<p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Pickup code</p>
+						<p className="text-2xl font-bold tabular-nums tracking-[0.22em]">{pickup.code}</p>
+						<p className="text-[11px] text-muted-foreground">Order #{order.number}</p>
+						<p className="text-sm font-semibold tracking-[0.06em]">{pickup.phrase}</p>
+					</div>
+				</div>
+			) : null}
 
 			<div className="grid gap-6 lg:grid-cols-[1fr_320px]">
 				<div className="space-y-6">
