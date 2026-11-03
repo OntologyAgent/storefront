@@ -3,6 +3,7 @@
 		"drawer": {
 			"itemCount": "{count, plural, one {# item} other {# items}}",
 			"subtotal": "Subtotal",
+			"collection": "Collection",
 			"shipping": "Shipping",
 			"shippingFree": "Free",
 			"shippingCalculated": "Calculated at checkout",
@@ -18,7 +19,7 @@
 			"quantity": "Qty: {count}",
 			"variant": "Variant: {name}",
 			"yourTotal": "Your Total",
-			"shippingNote": "Shipping will be calculated in the next step",
+			"shippingNote": "Collection is free — choose your store at checkout.",
 			"checkout": "Checkout"
 		}
 	},
@@ -63,10 +64,10 @@
 		"attributes": {
 			"description": "Description",
 			"productDetails": "Product Details",
-			"careInstructions": "Care Instructions",
-			"shippingReturns": "Shipping & Returns",
-			"shippingBody": "Free shipping on orders over {freeShippingThreshold}. Standard delivery 3-5 business days.",
-			"returnsBody": "Free returns within {returnsWindowDays} days of purchase. Items must be unworn with tags attached.",
+			"careInstructions": "Storage & care",
+			"shippingReturns": "Collection & returns",
+			"shippingBody": "Free collection at our 4 Sydney stores — Narwee, Punchbowl, Concord and Top Ryde. Reserve online, pay when you collect. Packed in plain packaging.",
+			"returnsBody": "Returns accepted within {returnsWindowDays} days on damaged, faulty or incorrect items. Cartons must be sealed and unopened.",
 			"yes": "Yes",
 			"no": "No"
 		},
@@ -87,7 +88,8 @@
 			"color": "Color",
 			"size": "Size",
 			"price": "Price",
-			"priceRange": "Price Range"
+			"priceRange": "Price Range",
+			"brand": "Brand"
 		},
 		"sort": "Sort",
 		"sortOptions": {
@@ -150,7 +152,7 @@
 			"languageTitle": "Language",
 			"languageDescription": "Site copy & formatting",
 			"marketTitle": "Market",
-			"marketDescription": "Currency, tax & shipping"
+			"marketDescription": "Currency, tax & collection"
 		}
 	},
 	"account": {
@@ -337,16 +339,16 @@
 		"orderStatus": {
 			"UNFULFILLED": "Processing",
 			"UNCONFIRMED": "Pending confirmation",
-			"PARTIALLY_FULFILLED": "Partially shipped",
-			"FULFILLED": "Shipped"
+			"PARTIALLY_FULFILLED": "Partially collected",
+			"FULFILLED": "Collected"
 		},
 		"fulfillment": {
 			"orderConfirmed": "Order confirmed",
 			"orderConfirmedDescription": "Payment confirmed and order placed",
-			"FULFILLED": "Shipped",
-			"FULFILLEDDescription": "Your order has been shipped",
+			"FULFILLED": "Collected",
+			"FULFILLEDDescription": "Your order has been collected",
 			"CANCELED": "Fulfillment cancelled",
-			"CANCELEDDescription": "Shipment was cancelled",
+			"CANCELEDDescription": "Collection was cancelled",
 			"REFUNDED": "Refunded",
 			"REFUNDEDDescription": "Payment has been refunded",
 			"REFUNDED_AND_RETURNED": "Refunded & Returned",

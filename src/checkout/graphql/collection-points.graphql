@@ -1,0 +1,26 @@
+query CheckoutCollectionPoints($id: ID!) {
+	checkout(id: $id) {
+		id
+		availableCollectionPoints {
+			id
+			name
+			address {
+				streetAddress1
+				city
+				postalCode
+				countryArea
+				country {
+					country
+					code
+				}
+			}
+		}
+		deliveryMethod {
+			__typename
+			... on Warehouse {
+				id
+				name
+			}
+		}
+	}
+}

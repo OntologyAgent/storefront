@@ -36,5 +36,8 @@ export const dataExtensions: {
 } = {
 	profiles: {},
 	webhookScopes: {},
-	operations: {},
+	operations: {
+		// Click & collect: the checkout page reads collection points on demand.
+		CheckoutCollectionPoints: { access: "live", auth: "none" },
+	},
 };

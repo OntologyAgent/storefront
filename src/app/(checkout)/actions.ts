@@ -4,6 +4,7 @@ import { after } from "next/server";
 import {
 	AddressValidationRulesDocument,
 	CheckoutAddPromoCodeDocument,
+	CheckoutCollectionPointsDocument,
 	CheckoutBillingAddressUpdateDocument,
 	CheckoutCompleteDocument,
 	CheckoutCreateDocument,
@@ -37,6 +38,8 @@ import {
 	type CheckoutDeliveryMethodUpdateMutationVariables,
 	type CheckoutEmailUpdateMutation,
 	type CheckoutEmailUpdateMutationVariables,
+	type CheckoutCollectionPointsQuery,
+	type CheckoutCollectionPointsQueryVariables,
 	type CheckoutMetadataUpdateMutation,
 	type CheckoutMetadataUpdateMutationVariables,
 	type CheckoutLineDeleteMutation,
@@ -96,6 +99,11 @@ import { liveQuery, mutate, rawMutation } from "@/lib/saleor";
 import * as Checkout from "@/lib/checkout";
 import { saveCheckoutId } from "@/app/actions";
 import { setOrderViewCookie, signOrderViewToken } from "@/lib/order-view";
+
+const checkoutCollectionPointsDocument = toTypedDocument<
+	CheckoutCollectionPointsQuery,
+	CheckoutCollectionPointsQueryVariables
+>(CheckoutCollectionPointsDocument);
 
 const checkoutEmailUpdateDocument = toTypedDocument<
 	CheckoutEmailUpdateMutation,
@@ -188,6 +196,129 @@ const userSetDefaultAddressDocument = toTypedDocument<
 	UserSetDefaultAddressMutation,
 	UserSetDefaultAddressMutationVariables
 >(UserSetDefaultAddressDocument);
+
+export type CheckoutPickupPoint = {
+	id: string;
+	name: string;
+	address: {
+		streetAddress1: string | null;
+		city: string | null;
+		postalCode: string | null;
+		countryArea: string | null;
+		country: { country: string | null; code: string };
+	} | null;
+};
+
+export type CheckoutPickupOptions =
+	| { ok: true; points: CheckoutPickupPoint[]; selectedId: string | null }
+	| { ok: false; error: string };
+
+/**
+ * Click & collect points for a checkout plus the warehouse currently selected.
+ * Kept out of `CheckoutFragment` on purpose: only the pickup step needs it, and
+ * widening the shared fragment would ripple through every checkout consumer.
+ */
+export async function getCheckoutCollectionPoints(checkoutId: string): Promise<CheckoutPickupOptions> {
+	const result = await liveQuery(checkoutCollectionPointsDocument, { variables: { id: checkoutId } });
+	if (!result.ok) {
+		return { ok: false, error: result.error.message };
+	}
+	const checkout = result.data.checkout;
+	if (!checkout) {
+		return { ok: false, error: "Checkout not found" };
+	}
+	const method = checkout.deliveryMethod;
+	const selectedId = method?.__typename === "Warehouse" ? (method.id ?? null) : null;
+	return {
+		ok: true,
+		points: (checkout.availableCollectionPoints ?? []) as CheckoutPickupPoint[],
+		selectedId,
+	};
+}
+
+/**
+ * 到店付款：把选定自提门店的地址写成账单地址。
+ *
+ * Saleor 的 `checkoutComplete` 强制要求 billing address（clean_billing_address），
+ * 而自提订单不需要客户填任何地址，所以这里用门店地址占位。客户到店付款、
+ * 拿收据，账单地址只用于订单记录。
+ */
+/**
+ * 到店付款：把选定门店的地址同时写成「收货地址 + 账单地址」。
+ *
+ * - 收货地址：Saleor 用 LOCAL 自提点做配送区校验，没有地址时门店可能不可选。
+ * - 账单地址：`checkoutComplete` 强制要求（clean_billing_address）。
+ *
+ * 客户一个字段都不用填。
+ */
+export async function setPickupAddresses(
+	checkoutId: string,
+	point: {
+		name: string;
+		address: {
+			streetAddress1?: string | null;
+			city?: string | null;
+			postalCode?: string | null;
+			countryArea?: string | null;
+			country?: { code: string };
+		} | null;
+	},
+): Promise<CheckoutActionResult> {
+	const address = point.address;
+	if (!address) {
+		return { ok: false, error: "Pickup store address is unavailable." };
+	}
+
+	const addressInput = {
+		firstName: "Pickup",
+		lastName: point.name.slice(0, 50),
+		streetAddress1: address.streetAddress1 ?? point.name,
+		city: address.city ?? "",
+		postalCode: address.postalCode ?? "",
+		country: address.country?.code ?? "AU",
+		countryArea: address.countryArea ?? "NSW",
+	};
+
+	const shipping = await updateCheckoutShippingAddress(checkoutId, addressInput as never, false);
+	if (!shipping.ok) {
+		return shipping;
+	}
+
+	return updateCheckoutBillingAddress({ checkoutId, billingAddress: addressInput as never, saveAddress: false });
+}
+
+export async function setPickupBillingAddress(
+	checkoutId: string,
+	point: {
+		name: string;
+		address: {
+			streetAddress1?: string | null;
+			city?: string | null;
+			postalCode?: string | null;
+			countryArea?: string | null;
+			country?: { code: string };
+		} | null;
+	},
+): Promise<CheckoutActionResult> {
+	const address = point.address;
+	if (!address) {
+		return { ok: false, error: "Pickup store address is unavailable." };
+	}
+
+	return updateCheckoutBillingAddress({
+		checkoutId,
+		saveAddress: false,
+		billingAddress: {
+			firstName: "Pickup",
+			lastName: point.name.slice(0, 50),
+			streetAddress1: address.streetAddress1 ?? point.name,
+			city: address.city ?? "",
+			postalCode: address.postalCode ?? "",
+			country: address.country?.code ?? "AU",
+			countryArea: address.countryArea ?? "NSW",
+		} as never,
+	});
+}
 
 /** Live checkout read for client sync — bypasses Next.js router/RSC cache. */
 export async function syncCheckoutFromServer(checkoutId: string): Promise<CheckoutFetchResult> {

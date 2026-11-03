@@ -1,10 +1,14 @@
 "use client";
 
 import { useState, useCallback, useMemo, type FC } from "react";
-import { Truck, Clock, Leaf, ChevronLeft, AlertTriangle } from "lucide-react";
+import { Truck, Clock, Leaf, ChevronLeft, AlertTriangle, Store } from "lucide-react";
 import { Button } from "@/ui/components/ui/button";
 import { cn } from "@/lib/utils";
-import { updateCheckoutDeliveryMethod } from "@/app/(checkout)/actions";
+import {
+	getCheckoutCollectionPoints,
+	setPickupBillingAddress,
+	updateCheckoutDeliveryMethod,
+} from "@/app/(checkout)/actions";
 import { availabilityIssueFromFieldErrors } from "@/checkout/lib/checkout-availability";
 import { validateCheckoutFulfillment } from "@/checkout/lib/validate-checkout-fulfillment";
 import { useCheckoutAvailability } from "@/checkout/providers/checkout-availability";
@@ -21,6 +25,9 @@ import { formatShippingPrice } from "@/checkout/lib/utils/money";
 import { MobileStickyAction } from "./mobile-sticky-action";
 import { useCheckoutStepNumber } from "@/checkout/hooks/use-checkout-steps";
 import { useTranslations } from "next-intl";
+import { useEffect } from "react";
+import { PICKUP_ONLY, formatPickupAddress, type PickupPoint } from "@/checkout/lib/pickup";
+import { readPickupPreference, writePickupPreference } from "@/checkout/lib/pickup-preference";
 
 interface ShippingStepProps {
 	checkout: CheckoutFragment;
@@ -47,9 +54,35 @@ export const ShippingStep: FC<ShippingStepProps> = ({
 	);
 	const hasShippingAddress = !!checkout.shippingAddress;
 	const savedDeliveryId = checkout.delivery?.id;
+	const [collectionPoints, setCollectionPoints] = useState<PickupPoint[]>([]);
+	const [savedPickupId, setSavedPickupId] = useState<string | null>(null);
+	const hasPickup = collectionPoints.length > 0;
+	const pickupOnly = PICKUP_ONLY && hasPickup;
+
+	useEffect(() => {
+		let cancelled = false;
+		void (async () => {
+			const result = await getCheckoutCollectionPoints(checkout.id);
+			if (cancelled || !result.ok) return;
+			setCollectionPoints(result.points);
+			setSavedPickupId(result.selectedId);
+			// No store chosen on this checkout yet → preselect the last one they used.
+			if (!result.selectedId) {
+				const remembered = readPickupPreference();
+				if (remembered && result.points.some((point) => point.id === remembered)) {
+					setUserPickupId(remembered);
+				}
+			}
+		})();
+		return () => {
+			cancelled = true;
+		};
+	}, [checkout.id]);
 
 	const [userSelectedMethod, setUserSelectedMethod] = useState<string | undefined>();
+	const [userPickupId, setUserPickupId] = useState<string | undefined>();
 	const selectedMethod = resolveSelectedDeliveryId(userSelectedMethod, deliveries, savedDeliveryId);
+	const selectedPickupId = userPickupId ?? savedPickupId ?? undefined;
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 	const { availabilityIssue, setAvailabilityIssue } = useCheckoutAvailability();
@@ -63,8 +96,9 @@ export const ShippingStep: FC<ShippingStepProps> = ({
 			event?.preventDefault();
 			if (isSubmitting) return;
 
-			if (!selectedMethod) {
-				setError(t("errors.selectShippingMethod"));
+			const deliveryChoice = selectedPickupId ?? selectedMethod;
+			if (!deliveryChoice) {
+				setError(pickupOnly ? "Select a store to collect from." : t("errors.selectShippingMethod"));
 				(document.querySelector('input[name="shipping"]') as HTMLElement | null)?.focus();
 				return;
 			}
@@ -75,8 +109,10 @@ export const ShippingStep: FC<ShippingStepProps> = ({
 
 			try {
 				let nextCheckout = checkout;
-				if (selectedMethod !== savedDeliveryId) {
-					const result = await updateCheckoutDeliveryMethod(checkout.id, selectedMethod);
+				const currentChoice = savedPickupId ?? savedDeliveryId;
+
+				if (deliveryChoice !== currentChoice) {
+					const result = await updateCheckoutDeliveryMethod(nextCheckout.id, deliveryChoice);
 					if (!result.ok) {
 						const issue = result.fieldErrors?.length
 							? availabilityIssueFromFieldErrors(checkout.lines, result.fieldErrors)
@@ -97,6 +133,7 @@ export const ShippingStep: FC<ShippingStepProps> = ({
 				const fulfillment = await validateCheckoutFulfillment(
 					nextCheckout,
 					t("errors.fulfillmentCheckFailed"),
+					{ skipAddressResubmit: pickupOnly },
 				);
 				if (!fulfillment.ok) {
 					if (fulfillment.reason === "availability") {
@@ -108,18 +145,49 @@ export const ShippingStep: FC<ShippingStepProps> = ({
 					return;
 				}
 
+				// 自提订单不用客户填地址：Saleor 选了仓库后会自带收货地址，
+				// 这里只补一个账单地址（checkoutComplete 强制要求）。
+				if (pickupOnly && selectedPickupId) {
+					const point = collectionPoints.find((p) => p.id === selectedPickupId);
+					if (point) {
+						const billingResult = await setPickupBillingAddress(nextCheckout.id, point);
+						if (!billingResult.ok) {
+							setError(billingResult.error ?? t("errors.fulfillmentCheckFailed"));
+							setIsSubmitting(false);
+							return;
+						}
+						nextCheckout = billingResult.checkout;
+					}
+				}
+
 				onComplete(nextCheckout);
 			} catch {
 				setError(t("errors.fulfillmentCheckFailed"));
 				setIsSubmitting(false);
 			}
 		},
-		[selectedMethod, savedDeliveryId, onComplete, checkout, isSubmitting, setAvailabilityIssue, t],
+		[
+			selectedMethod,
+			selectedPickupId,
+			savedDeliveryId,
+			savedPickupId,
+			pickupOnly,
+			collectionPoints,
+			selectedPickupId,
+			onComplete,
+			checkout,
+			isSubmitting,
+			setAvailabilityIssue,
+			t,
+		],
 	);
 
 	const showSpinner = isLoadingDeliveries && !isSubmitting && deliveries.length === 0;
 	const canContinue =
-		!isSubmitting && deliveries.length > 0 && !!selectedMethod && !showSpinner && !availabilityIssue;
+		!isSubmitting &&
+		!availabilityIssue &&
+		(selectedPickupId || (deliveries.length > 0 && !!selectedMethod)) &&
+		(!showSpinner || pickupOnly);
 	const buttonText = isSubmitting
 		? tActions("saving")
 		: showSpinner
@@ -139,6 +207,58 @@ export const ShippingStep: FC<ShippingStepProps> = ({
 				</div>
 			) : null}
 
+			{hasPickup ? (
+				<section className="space-y-4">
+					<h2 className="text-lg font-semibold">Collect in store</h2>
+					<p className="text-sm text-muted-foreground">
+						Free. We email you as soon as your order is packed — bring photo ID that matches the order name.
+					</p>
+
+					{error ? <p className="text-sm text-destructive">{error}</p> : null}
+
+					<div className={cn("space-y-3", isSubmitting && "pointer-events-none opacity-60")}>
+						{collectionPoints.map((point) => {
+							const isSelected = selectedPickupId === point.id;
+							return (
+								<label
+									key={point.id}
+									className={cn(
+										"flex cursor-pointer items-center gap-4 rounded-lg border p-4 transition-colors",
+										"focus-within:ring-2 focus-within:ring-foreground focus-within:ring-offset-2",
+										isSelected
+											? "border-foreground bg-secondary/50"
+											: "border-border hover:border-muted-foreground/50",
+									)}
+								>
+									<input
+										type="radio"
+										name="pickup"
+										value={point.id}
+										checked={isSelected}
+										onChange={() => {
+											setUserPickupId(point.id);
+											setUserSelectedMethod(undefined);
+											setError(null);
+											writePickupPreference(point.id);
+										}}
+										className="sr-only"
+									/>
+									<Store className="h-5 w-5 shrink-0 text-muted-foreground" aria-hidden="true" />
+									<span className="min-w-0 flex-1">
+										<span className="block font-medium text-foreground">{point.name}</span>
+										<span className="block text-sm text-muted-foreground">
+											{formatPickupAddress(point.address)}
+										</span>
+									</span>
+									<span className="font-medium text-green-600">Free</span>
+								</label>
+							);
+						})}
+					</div>
+				</section>
+			) : null}
+
+			{!pickupOnly ? (
 			<section className="space-y-4">
 				<h2 className="text-lg font-semibold">{t("shipping.methodTitle")}</h2>
 
@@ -231,6 +351,7 @@ export const ShippingStep: FC<ShippingStepProps> = ({
 					</div>
 				)}
 			</section>
+			) : null}
 
 			<div className="flex items-center justify-between">
 				<button

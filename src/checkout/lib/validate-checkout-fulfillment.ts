@@ -31,8 +31,15 @@ export type CheckoutFulfillmentResult =
 export async function validateCheckoutFulfillment(
 	checkout: FulfillmentCheckout,
 	fallbackError: string,
+	options?: { skipAddressResubmit?: boolean },
 ): Promise<CheckoutFulfillmentResult> {
 	if (!checkout.isShippingRequired || !checkout.shippingAddress) {
+		return { ok: true };
+	}
+
+	// 自提（click & collect）：收货地址由仓库地址托管，Saleor 会拒绝任何手动
+	// 改动（ERROR_CC_ADDRESS_CHANGE_FORBIDDEN），所以不再重投地址。
+	if (options?.skipAddressResubmit) {
 		return { ok: true };
 	}
 
