@@ -15,28 +15,29 @@
 
 export const brandConfig = {
 	/** Site name used in titles, metadata, and headers */
-	siteName: "Saleor Store",
+	siteName: "Lucky Tobacconist",
 
 	/** Legal entity name for copyright notices */
-	copyrightHolder: "Saleor Store",
+	copyrightHolder: "Lucky Tobacconist",
 
 	/** Organization name for structured data (JSON-LD) */
-	organizationName: "Saleor Store",
+	organizationName: "Lucky Tobacconist",
 
 	/** Default brand name for products without a brand */
-	defaultBrand: "Saleor Store",
+	defaultBrand: "Lucky Tobacconist",
 
 	/** Tagline/description for the store */
-	tagline: "Discover our collection.",
+	tagline: "Cartons, menthol and vapes — free collection at 4 Sydney stores.",
 
 	/** Homepage meta description */
-	description: "Shop our collection.",
+	description:
+		"Factory-sealed cigarette cartons, menthol lines and disposable vapes. Discreet packaging and free collection at our 4 Sydney stores, 18+ only.",
 
 	/** Logo aria-label for accessibility */
-	logoAriaLabel: "Store",
+	logoAriaLabel: "Lucky Tobacconist",
 
 	/** Title template - %s will be replaced with page title */
-	titleTemplate: "%s | Saleor Store",
+	titleTemplate: "%s | Lucky Tobacconist",
 
 	/** Social media handles */
 	social: {

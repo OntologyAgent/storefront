@@ -2,7 +2,10 @@
  * Shared Logo Component
  *
  * - /public/logo.svg — default (light backgrounds)
- * - /public/logo-dark.svg — inverted surfaces (e.g. footer on bg-foreground)
+ * - /public/brand-logo-dark.svg — inverted surfaces (e.g. footer on bg-foreground)
+ *
+ * The filenames are brand-specific on purpose: `/logo.svg` was served with a 30-day
+ * cache header, so reusing that URL left returning visitors on the old Paper mark.
  *
  * @example
  * <Logo className="h-7 w-auto" />
@@ -17,8 +20,8 @@ interface LogoProps {
 	inverted?: boolean;
 }
 
-export const Logo = ({ className, ariaLabel = "Paper by Saleor", inverted = false }: LogoProps) => {
-	const src = inverted ? "/logo-dark.svg" : "/logo.svg";
+export const Logo = ({ className, ariaLabel = "Lucky Tobacconist", inverted = false }: LogoProps) => {
+	const src = inverted ? "/brand-logo-dark.svg" : "/brand-logo.svg";
 
 	return (
 		// eslint-disable-next-line @next/next/no-img-element
