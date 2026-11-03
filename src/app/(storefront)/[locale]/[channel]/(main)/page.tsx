@@ -9,8 +9,12 @@ import { getStorefrontContent } from "@/lib/content/server";
 import { buildSaleorSrcSet } from "@/lib/images";
 import { pickTranslatedSlug } from "@/lib/saleor-translations";
 import { PaperSignEditorialPlaceholder } from "@/ui/components/shared/paper-sign";
+import { heroSlides, homepageFaq } from "@/config/merchandising";
+import { BrandStrip } from "@/ui/sections/brand-strip/brand-strip";
 import { CategoryTileGrid, type CategoryTile } from "@/ui/sections/category-tile-grid/category-tile-grid";
-import { EditorialHero } from "@/ui/sections/editorial-hero/editorial-hero";
+import { FaqSection } from "@/ui/sections/faq/faq-section";
+import { ServiceBar } from "@/ui/sections/service-bar/service-bar";
+import { EditorialHeroSlider } from "@/ui/sections/editorial-hero/editorial-hero-slider";
 import { FeaturedCollectionSection } from "@/ui/sections/featured-collection-section/featured-collection-section";
 import { ImageWithText } from "@/ui/sections/image-with-text/image-with-text";
 import { MediaHero } from "@/ui/sections/media-hero/media-hero";
@@ -118,7 +122,6 @@ async function HomePageContent({ params }: { params: HomeParams }) {
 		featuredCollection.collectionSlug,
 	);
 	const heroProduct = products[0];
-	const heroImage = pickImage(heroProduct);
 	const editorialProduct = products.find(
 		(product) => product.slug !== heroProduct?.slug && product.thumbnail?.url,
 	);
@@ -150,18 +153,18 @@ async function HomePageContent({ params }: { params: HomeParams }) {
 					primaryCta={{ label: hero.primaryCtaLabel, href: "/products" }}
 				/>
 			) : (
-				// No lifestyle/hero image in the catalog → clean editorial split with a packshot.
-				<EditorialHero
+				// No merchandised hero image yet → editorial split with the two brand-mood
+				// slides. Swap `heroSlides` in config/merchandising for real photography later.
+				<EditorialHeroSlider
 					eyebrow={hero.eyebrow}
 					heading={hero.heading}
 					subheading={hero.subheading}
-					image={heroImage?.url}
-					imageSrcSet={heroImage?.srcSet}
-					imageAlt={heroImage?.alt ?? ""}
 					primaryCta={{ label: hero.primaryCtaLabel, href: "/products" }}
-					placeholder={<PaperSignEditorialPlaceholder />}
+					slides={heroSlides}
 				/>
 			)}
+
+			<ServiceBar />
 
 			{/* Cached collection — resolves with the rest of the body inside Suspense. */}
 			<FeaturedCollectionSection
@@ -171,6 +174,8 @@ async function HomePageContent({ params }: { params: HomeParams }) {
 				collectionSlug={featuredCollection.collectionSlug}
 				limit={featuredCollection.limit}
 			/>
+
+			<BrandStrip />
 
 			{categoryTiles.length >= 2 ? (
 				<CategoryTileGrid
@@ -185,7 +190,7 @@ async function HomePageContent({ params }: { params: HomeParams }) {
 
 			<ImageWithText
 				heading={editorial.heading}
-				paragraphs={editorial.paragraphs}
+				paragraphs={editorial.paragraphs.map((paragraph) => formatContentLabel(paragraph, policyValues))}
 				image={editorial.image ?? editorialFallbackImage?.url}
 				imageSrcSet={editorial.image ? undefined : editorialFallbackImage?.srcSet}
 				imageAlt={editorial.image ? editorial.imageAlt : (editorialFallbackImage?.alt ?? "")}
@@ -202,9 +207,17 @@ async function HomePageContent({ params }: { params: HomeParams }) {
 				tone="muted"
 			/>
 
+			<FaqSection
+				eyebrow="Before you order"
+				heading="Questions, answered"
+				intro="Delivery, packaging and age checks — the things customers ask before their first carton."
+				items={homepageFaq}
+				tone="muted"
+			/>
+
 			<RichTextBlock
 				heading={brandStory.heading}
-				paragraphs={brandStory.paragraphs}
+				paragraphs={brandStory.paragraphs.map((paragraph) => formatContentLabel(paragraph, policyValues))}
 				align="center"
 				width="narrow"
 				tone="inverse"

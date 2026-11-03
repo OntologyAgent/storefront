@@ -5,13 +5,12 @@ import { useTranslations } from "next-intl";
 import Image from "next/image";
 import Link from "next/link";
 import { LinkWithChannel } from "@/ui/atoms/link-with-channel";
-import { Minus, Plus, Trash2, ShoppingBag, ArrowRight, Truck, RotateCcw } from "lucide-react";
+import { Minus, Plus, Trash2, ShoppingBag, ArrowRight, Store, RotateCcw } from "lucide-react";
 import { Button, buttonClassName } from "@/ui/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetCloseButton } from "@/ui/components/ui/sheet";
 import { useCart } from "./cart-context";
 import type { DeleteCartLine, UpdateCartLineQuantity } from "./cart-mutations";
 import { bumpChromeVersion } from "@/lib/chrome-sync";
-import { cn } from "@/lib/utils";
 import { formatMoney } from "@/lib/utils";
 import { localeConfig, resolveLocaleFromSlug } from "@/config/locale";
 import { hasDiscount } from "@/lib/pricing";
@@ -167,16 +166,10 @@ export function CartDrawer({
 		: "/checkout";
 	const { drawer } = cart;
 
-	// Single source of truth: the same threshold drives the progress bar, the summary
-	// shipping row, and the trust signal — and matches the announcement bar copy.
-	const freeShippingThreshold = policies.shipping.freeShippingThreshold;
-	const freeShippingEnabled = freeShippingThreshold != null;
-	const qualifiesForFreeShipping = freeShippingEnabled && subtotal >= freeShippingThreshold;
-	const progressToFreeShipping =
-		freeShippingEnabled && freeShippingThreshold > 0
-			? Math.min((subtotal / freeShippingThreshold) * 100, 100)
-			: 100;
-	const amountToFreeShipping = freeShippingEnabled ? Math.max(freeShippingThreshold - subtotal, 0) : 0;
+	// Click & collect only: there is no shipping threshold to unlock. The drawer states
+	// the free-collection fact instead of a progress bar, and the same label is reused
+	// as the trust signal at the bottom of the sheet.
+	const collectionNote = formatContentLabel(drawer.addForFreeShipping, {});
 	const returnsLabel = formatContentLabel(cart.trust.returnsLabel, {
 		returnsWindowDays: policies.returns.windowDays,
 	});
@@ -194,29 +187,12 @@ export function CartDrawer({
 					<SheetCloseButton className="static" />
 				</SheetHeader>
 
-				{/* Free Shipping Progress */}
-				{lines.length > 0 && freeShippingEnabled && (
+				{/* Free store collection */}
+				{lines.length > 0 && (
 					<div className="border-b border-border bg-secondary/50 px-6 py-4">
-						<div className="mb-2 flex items-center gap-2 text-sm">
-							<Truck className={cn("h-4 w-4", amountToFreeShipping <= 0 && "text-success")} />
-							{amountToFreeShipping > 0 ? (
-								<span>
-									{formatContentLabel(drawer.addForFreeShipping, {
-										amount: formatMoney(amountToFreeShipping, currency, intlLocale),
-									})}
-								</span>
-							) : (
-								<span className="font-medium text-success">{drawer.freeShippingQualified}</span>
-							)}
-						</div>
-						<div className="h-1.5 overflow-hidden rounded-full bg-border">
-							<div
-								className={cn(
-									"h-full rounded-full transition-all duration-500 ease-out",
-									amountToFreeShipping <= 0 ? "bg-success" : "bg-foreground",
-								)}
-								style={{ width: `${progressToFreeShipping}%` }}
-							/>
+						<div className="flex items-center gap-2 text-sm">
+							<Store className="h-4 w-4 text-success" />
+							<span className="font-medium text-success">{collectionNote}</span>
 						</div>
 					</div>
 				)}
@@ -378,8 +354,8 @@ export function CartDrawer({
 								<span>{formatMoney(subtotal, currency, intlLocale)}</span>
 							</div>
 							<div className="flex items-center justify-between text-sm">
-								<span className="text-muted-foreground">{t("shipping")}</span>
-								<span>{qualifiesForFreeShipping ? t("shippingFree") : t("shippingCalculated")}</span>
+								<span className="text-muted-foreground">{t("collection")}</span>
+								<span>{t("shippingFree")}</span>
 							</div>
 							<div className="flex items-center justify-between border-t border-border pt-2 text-base font-semibold">
 								<span>{t("total")}</span>
@@ -424,12 +400,10 @@ export function CartDrawer({
 
 						{/* Trust Signals */}
 						<div className="flex items-center justify-center gap-6 border-t border-border px-6 pb-4 pt-4 text-xs text-muted-foreground">
-							{freeShippingEnabled && (
-								<span className="flex items-center gap-1.5">
-									<Truck className="h-4 w-4" />
-									{cart.trust.freeShippingPrefix} {formatMoney(freeShippingThreshold, currency, intlLocale)}
-								</span>
-							)}
+							<span className="flex items-center gap-1.5">
+								<Store className="h-4 w-4" />
+								{cart.trust.freeShippingPrefix}
+							</span>
 							<span className="flex items-center gap-1.5">
 								<RotateCcw className="h-4 w-4" />
 								{returnsLabel}

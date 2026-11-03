@@ -1,4 +1,3 @@
-import { brandConfig } from "@/config/brand";
 import { STOREFRONT_CONTENT_VERSION, type StorefrontContent } from "@/lib/content/types";
 
 /**
@@ -11,7 +10,8 @@ export const defaultStorefrontContent = {
 	version: STOREFRONT_CONTENT_VERSION,
 	// Single source of truth for channel-wide facts. Copy references these via
 	// `{freeShippingThreshold}` / `{returnsWindowDays}` tokens instead of baking the
-	// numbers into strings, so the cart math, announcement, and trust labels never drift.
+	// numbers into strings. The store is click & collect only, so the shipping
+	// threshold is no longer rendered in any customer-facing copy.
 	policies: {
 		shipping: {
 			freeShippingThreshold: 75,
@@ -23,25 +23,27 @@ export const defaultStorefrontContent = {
 	chrome: {
 		announcementBar: {
 			id: "",
-			message: "Free shipping on orders over {freeShippingThreshold}",
+			message: "Free collection at 4 Sydney stores · Discreet packaging · 18+ only",
 			href: null,
 			linkLabel: null,
 			dismissible: true,
 		},
 		nav: {
-			allProductsLabel: "All",
+			allProductsLabel: "Shop",
 			viewAllLabel: "View all {label}",
 		},
 	},
 	surfaces: {
 		homepage: {
 			hero: {
-				heading: "Discover our collection",
-				subheading: brandConfig.tagline,
-				primaryCtaLabel: "Shop all",
+				eyebrow: "4 Sydney stores · free collection",
+				heading: "Cartons, menthol and vapes — collect free.",
+				subheading:
+					"Factory-sealed cartons from our four Sydney stores. Reserve online and collect free at Narwee, Punchbowl, Concord or Top Ryde — pay when you pick up.",
+				primaryCtaLabel: "Shop cartons",
 			},
 			featuredCollection: {
-				heading: "Featured products",
+				heading: "Best sellers",
 				collectionSlug: "featured-products",
 				limit: 8,
 			},
@@ -50,42 +52,45 @@ export const defaultStorefrontContent = {
 			},
 			photoCredits: [],
 			brandStory: {
-				heading: "Our story",
+				heading: "An Australian tobacconist, online",
 				paragraphs: [
-					"Tell shoppers who you are and what you stand for.",
-					"Edit this copy in Dashboard → Models → Storefront — Homepage.",
+					"Lucky Tobacconist supplies factory-sealed cartons, menthol lines and disposable vapes to adult smokers across Sydney. Every carton is sourced through established suppliers and stored in a temperature-controlled room before it is packed for collection.",
+					"Every order is packed in plain, unbranded packaging and handed over the counter when you collect. Collection is always free — no minimum spend — and returns are accepted within {returnsWindowDays} days on unopened items.",
 				],
 			},
 			values: {
-				heading: "Why shop with us",
+				heading: "Why buy from us",
 				columns: [
 					{
-						title: "Quality",
-						text: "Share what makes your products worth choosing.",
+						title: "Genuine stock only",
+						text: "Factory-sealed cartons from established suppliers — no repacks, no loose sticks, no substitutes.",
 					},
 					{
-						title: "Shipping",
-						text: "Describe how and when orders arrive.",
+						title: "Collect the same day",
+						text: "Reserve online before you head over — most orders are packed and ready within the hour during store hours.",
 					},
 					{
-						title: "Returns",
-						text: "Easy returns within {returnsWindowDays} days.",
+						title: "30-day returns",
+						text: "Damaged, wrong or faulty? Contact us within {returnsWindowDays} days and we replace or refund it.",
 					},
 				],
 				columnsDesktop: 3,
 			},
 			editorial: {
-				heading: "From the shop",
-				paragraphs: ["Highlight a collection, seasonal story, or campaign — then edit this block in Models."],
+				heading: "Buying by the carton",
+				paragraphs: [
+					"A carton is ten packs, factory sealed — the cheapest way to buy and the only way we sell. Mix strengths and flavours in one order; collection is always free.",
+				],
 				imagePosition: "right",
-				ctaLabel: "Explore collections",
+				ctaLabel: "Browse all cartons",
 				image: null,
 				imageAlt: "",
 			},
 		},
 		products: {
-			title: "All Products",
-			description: "Browse our full catalog.",
+			title: "Shop all",
+			description:
+				"Factory-sealed cartons, menthol lines and disposable vapes. Filter by category, strength or brand, and check out with free collection at our four Sydney stores.",
 		},
 		cart: {
 			empty: {
@@ -94,13 +99,13 @@ export const defaultStorefrontContent = {
 				ctaLabel: "Start Shopping",
 			},
 			trust: {
-				freeShippingPrefix: "Free delivery over",
+				freeShippingPrefix: "Free collection at 4 Sydney stores",
 				returnsLabel: "{returnsWindowDays}-day returns",
 			},
 			drawer: {
 				title: "Your Bag",
-				addForFreeShipping: "Add {amount} more for free shipping",
-				freeShippingQualified: "You qualify for free shipping!",
+				addForFreeShipping: "Free collection at 4 Sydney stores — pay when you collect",
+				freeShippingQualified: "Free collection — pay when you collect",
 			},
 		},
 		checkout: {

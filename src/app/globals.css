@@ -90,3 +90,14 @@
 		font-weight: 500;
 	}
 }
+
+/* Hero slider autoplay progress — the active dot fills over one interval so the
+   auto-advance is visible instead of looking like a static image. */
+@keyframes hero-progress {
+	from {
+		transform: scaleX(0);
+	}
+	to {
+		transform: scaleX(1);
+	}
+}
