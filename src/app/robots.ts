@@ -1,4 +1,5 @@
 import type { MetadataRoute } from "next";
+import { getBaseUrl } from "@/lib/seo";
 
 /**
  * Crawl policy is cost policy.
@@ -42,5 +43,7 @@ export default function robots(): MetadataRoute.Robots {
 				],
 			},
 		],
+		// Served by src/app/sitemap.ts (products, collections, categories, CMS pages).
+		sitemap: `${getBaseUrl().replace(/\/+$/, "")}/sitemap.xml`,
 	};
 }

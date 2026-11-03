@@ -18,19 +18,22 @@ export const generateMetadata = async (props: {
 	const params = await props.params;
 	const page = await getPageData(params.slug, params.locale);
 
+	// Soft-404 guard (see collections/[slug]): noindex instead of a canonical 200 page.
+	if (!page) {
+		return { title: "Page not found", robots: { index: false, follow: false } };
+	}
+
 	return buildBrowsePageMetadata({
-		title: page?.seoTitle || page?.title || "Page",
-		description: page
-			? resolveSeoDescription({
-					seoDescription: page.seoDescription,
-					body: page.content,
-					fallbackName: page.title,
-				})
-			: undefined,
+		title: page.seoTitle || page.title || "Page",
+		description: resolveSeoDescription({
+			seoDescription: page.seoDescription,
+			body: page.content,
+			fallbackName: page.title,
+		}),
 		locale: params.locale,
 		channel: params.channel,
-		pathSuffix: page ? catalogPathSuffix("pages", page) : `/pages/${encodeURIComponent(params.slug)}`,
-		pathSuffixByLocale: page ? buildCatalogPathSuffixByLocale("pages", buildLocaleSlugMap(page)) : undefined,
+		pathSuffix: catalogPathSuffix("pages", page),
+		pathSuffixByLocale: buildCatalogPathSuffixByLocale("pages", buildLocaleSlugMap(page)),
 	});
 };
 

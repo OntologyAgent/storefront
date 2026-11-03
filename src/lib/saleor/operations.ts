@@ -40,6 +40,8 @@ const CORE_OPERATIONS = {
 	PageGetBySlug: cached("locale"),
 	MenuGetBySlug: cached("channel-locale"),
 	StorefrontContentPages: cached("channel-locale"),
+	CollectionList: cached("channel-locale"),
+	SitemapEntries: cached("channel-locale"),
 	CategoriesBySlug: cached("global"),
 	ChannelsList: cached("global", "app"),
 

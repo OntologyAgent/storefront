@@ -1,0 +1,43 @@
+# Slug inventory for /sitemap.xml.
+# `products` is cursor-paginated (catalogue grows); the other three fit in one page.
+# Collections/pages have no `updatedAt` in Saleor 3.23, so only products/categories
+# can carry <lastmod>.
+query SitemapEntries($channel: String!, $first: Int = 100, $after: String) {
+	products(first: $first, after: $after, channel: $channel) {
+		edges {
+			node {
+				slug
+				updatedAt
+			}
+		}
+		pageInfo {
+			hasNextPage
+			endCursor
+		}
+	}
+	collections(first: 100, channel: $channel) {
+		edges {
+			node {
+				slug
+				products(first: 1) {
+					totalCount
+				}
+			}
+		}
+	}
+	categories(first: 100) {
+		edges {
+			node {
+				slug
+				updatedAt
+			}
+		}
+	}
+	pages(first: 100) {
+		edges {
+			node {
+				slug
+			}
+		}
+	}
+}
