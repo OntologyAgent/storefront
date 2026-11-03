@@ -28,6 +28,7 @@ import { useTranslations } from "next-intl";
 import { useEffect } from "react";
 import { PICKUP_ONLY, formatPickupAddress, type PickupPoint } from "@/checkout/lib/pickup";
 import { readPickupPreference, writePickupPreference } from "@/checkout/lib/pickup-preference";
+import { readPickupCustomerName } from "@/checkout/lib/pickup-customer";
 
 interface ShippingStepProps {
 	checkout: CheckoutFragment;
@@ -150,7 +151,11 @@ export const ShippingStep: FC<ShippingStepProps> = ({
 				if (pickupOnly && selectedPickupId) {
 					const point = collectionPoints.find((p) => p.id === selectedPickupId);
 					if (point) {
-						const billingResult = await setPickupBillingAddress(nextCheckout.id, point);
+						const billingResult = await setPickupBillingAddress(
+							nextCheckout.id,
+							point,
+							readPickupCustomerName(),
+						);
 						if (!billingResult.ok) {
 							setError(billingResult.error ?? t("errors.fulfillmentCheckFailed"));
 							setIsSubmitting(false);

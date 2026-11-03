@@ -39,6 +39,7 @@ import {
 import { useCheckoutAvailability } from "@/checkout/providers/checkout-availability";
 import { useCheckoutStepNumber } from "@/checkout/hooks/use-checkout-steps";
 import { PICKUP_ONLY } from "@/checkout/lib/pickup";
+import { readPickupCustomerName, writePickupCustomerName } from "@/checkout/lib/pickup-customer";
 import { useTranslations } from "next-intl";
 
 // Extracted components
@@ -139,6 +140,9 @@ const InformationStepForm: FC<InformationStepFormProps> = ({
 
 	// ----- Contact form state -----
 	const [email, setEmail] = useState(() => (isOrphaned ? "" : checkout.email || ""));
+	// Pickup-only: the name printed on the voucher (Saleor forces the shipping address to
+	// the warehouse, so this ends up on the billing address / dashboard customer column).
+	const [pickupName, setPickupName] = useState(() => readPickupCustomerName());
 	const [createAccount, setCreateAccount] = useState(false);
 	const [accountPassword, setAccountPassword] = useState("");
 	const [subscribeNews, setSubscribeNews] = useState(false);
@@ -569,6 +573,30 @@ const InformationStepForm: FC<InformationStepFormProps> = ({
 				subscribeNews={subscribeNews}
 				onSubscribeChange={setSubscribeNews}
 			/>
+
+			{PICKUP_ONLY ? (
+				<div className="space-y-2">
+					<label htmlFor="pickup-name" className="text-sm font-medium">
+						Name for the pickup voucher
+					</label>
+					<input
+						id="pickup-name"
+						name="pickupName"
+						type="text"
+						autoComplete="name"
+						value={pickupName}
+						onChange={(event) => {
+							setPickupName(event.target.value);
+							writePickupCustomerName(event.target.value);
+						}}
+						placeholder="e.g. Wei Chen"
+						className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-foreground focus:ring-offset-2"
+					/>
+					<p className="text-xs text-muted-foreground">
+						Staff use this name to hand over your order. Leave it blank and we will ask at the counter.
+					</p>
+				</div>
+			) : null}
 
 			{needsShippingAddress && (
 				<ShippingAddressSection

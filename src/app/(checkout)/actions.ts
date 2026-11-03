@@ -251,6 +251,14 @@ export async function getCheckoutCollectionPoints(checkoutId: string): Promise<C
  *
  * 客户一个字段都不用填。
  */
+/** Splits a free-text customer name into the two fields Saleor expects. */
+function splitCustomerName(name?: string | null): { firstName: string; lastName: string } {
+	const trimmed = (name ?? "").trim().replace(/\s+/g, " ");
+	if (!trimmed) return { firstName: "Click & Collect", lastName: "" };
+	const [first, ...rest] = trimmed.split(" ");
+	return { firstName: first.slice(0, 50), lastName: rest.join(" ").slice(0, 50) };
+}
+
 export async function setPickupAddresses(
 	checkoutId: string,
 	point: {
@@ -263,15 +271,17 @@ export async function setPickupAddresses(
 			country?: { code: string };
 		} | null;
 	},
+	customerName?: string | null,
 ): Promise<CheckoutActionResult> {
 	const address = point.address;
 	if (!address) {
 		return { ok: false, error: "Pickup store address is unavailable." };
 	}
 
+	const person = splitCustomerName(customerName);
 	const addressInput = {
-		firstName: "Pickup",
-		lastName: point.name.slice(0, 50),
+		...person,
+		companyName: point.name.slice(0, 100),
 		streetAddress1: address.streetAddress1 ?? point.name,
 		city: address.city ?? "",
 		postalCode: address.postalCode ?? "",
@@ -299,6 +309,7 @@ export async function setPickupBillingAddress(
 			country?: { code: string };
 		} | null;
 	},
+	customerName?: string | null,
 ): Promise<CheckoutActionResult> {
 	const address = point.address;
 	if (!address) {
@@ -309,8 +320,8 @@ export async function setPickupBillingAddress(
 		checkoutId,
 		saveAddress: false,
 		billingAddress: {
-			firstName: "Pickup",
-			lastName: point.name.slice(0, 50),
+			...splitCustomerName(customerName),
+			companyName: point.name.slice(0, 100),
 			streetAddress1: address.streetAddress1 ?? point.name,
 			city: address.city ?? "",
 			postalCode: address.postalCode ?? "",
