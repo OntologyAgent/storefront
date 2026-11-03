@@ -1,7 +1,6 @@
 import { formatMoney, formatMoneyRange } from "@/lib/utils";
 import { resolveLocaleFromSlug } from "@/config/locale";
 import { getDiscountInfo } from "@/lib/pricing";
-import { resolveChannelCurrency } from "@/lib/channels/resolve-channel-currency";
 import { getStorefrontContent } from "@/lib/content/server";
 import { addVariantToCart } from "@/app/actions";
 import { getTranslations } from "next-intl/server";
@@ -41,10 +40,9 @@ export async function VariantSectionDynamic({
 	const { variant: variantParam, sku: skuParam } = await searchParams;
 	const intlLocale = resolveLocaleFromSlug(localeSlug).bcp47;
 
-	const [t, content, currency, variantResult] = await Promise.all([
+	const [t, content, variantResult] = await Promise.all([
 		getTranslations({ locale: localeSlug, namespace: "pdp" }),
 		getStorefrontContent(channel, localeSlug),
-		resolveChannelCurrency(channel),
 		resolvePdpVariants(product, channel, localeSlug, {
 			variantId: variantParam,
 			sku: skuParam,
@@ -104,15 +102,8 @@ export async function VariantSectionDynamic({
 				)
 			: null;
 
-	const freeShippingThreshold = content.policies.shipping.freeShippingThreshold;
-	const freeShippingTrustLabel =
-		freeShippingThreshold != null
-			? `${content.surfaces.cart.trust.freeShippingPrefix} ${formatMoney(
-					freeShippingThreshold,
-					currency,
-					intlLocale,
-				)}`
-			: null;
+	// Click & collect only — the trust label states where, never a spend threshold.
+	const freeShippingTrustLabel = content.surfaces.cart.trust.freeShippingPrefix;
 	const secureCheckoutLabel = content.surfaces.checkout.trust.secureCheckout;
 
 	async function addToCart() {

@@ -1,7 +1,7 @@
 import { ShoppingBag } from "lucide-react";
 
 import type { StorefrontContent } from "@/lib/content";
-import { formatMoney, formatMoneyRange } from "@/lib/utils";
+import { formatMoneyRange } from "@/lib/utils";
 import { Button } from "@/ui/components/ui/button";
 
 /**
@@ -59,8 +59,8 @@ export function variantSectionFallbackProps(input: {
 	locale: string;
 	selectOptionsLabel: string;
 }): VariantSectionFallbackProps {
-	const { product, content, currency, locale, selectOptionsLabel } = input;
-	const threshold = content.policies.shipping.freeShippingThreshold;
+	const { product, content, locale, selectOptionsLabel } = input;
+	// Click & collect only — no spend threshold in the trust label.
 	return {
 		categoryName: product.category?.name,
 		price:
@@ -73,10 +73,7 @@ export function variantSectionFallbackProps(input: {
 			) || "",
 		selectOptionsLabel,
 		secureCheckoutLabel: content.surfaces.checkout.trust.secureCheckout,
-		freeShippingTrustLabel:
-			threshold != null
-				? `${content.surfaces.cart.trust.freeShippingPrefix} ${formatMoney(threshold, currency, locale)}`
-				: null,
+		freeShippingTrustLabel: content.surfaces.cart.trust.freeShippingPrefix,
 	};
 }
 

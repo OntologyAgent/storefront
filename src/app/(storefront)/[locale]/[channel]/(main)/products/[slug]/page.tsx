@@ -49,7 +49,8 @@ export async function generateMetadata(props: {
 	const product = await getProductData(params.slug, params.channel, params.locale);
 
 	if (!product) {
-		return { title: "Product Not Found" };
+		// Soft-404 (200 shell under cacheComponents) — keep it out of the index.
+		return { title: "Product Not Found", robots: { index: false, follow: false } };
 	}
 
 	// Translated description (Editor.js → plain text) so meta/OG never collapse to the
@@ -122,10 +123,12 @@ async function ProductShell({
 		resolveChannelCurrency(params.channel),
 	]);
 	const intlLocale = resolveLocaleFromSlug(params.locale).bcp47;
-	const policyLabels = buildPolicyLabelValues(content.policies, {
-		currency,
-		locale: intlLocale,
-	});
+	// Click & collect: no copy renders the free-shipping token any more, so it is passed
+	// empty. Otherwise the "$75.00" value would ship in the RSC payload of every PDP.
+	const policyLabels = {
+		...buildPolicyLabelValues(content.policies, { currency, locale: intlLocale }),
+		freeShippingThreshold: "",
+	};
 
 	if (!product) {
 		notFound();

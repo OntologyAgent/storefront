@@ -31,6 +31,25 @@ export function PdpPresetLayout({
 
 						{slots.buyBox}
 
+						<ul className="order-3 mt-5 divide-y divide-border border-y border-border text-sm">
+							<li className="flex items-center justify-between gap-4 py-2.5">
+								<span className="text-muted-foreground">Collection</span>
+								<span className="text-right font-medium">Free</span>
+							</li>
+							<li className="flex items-center justify-between gap-4 py-2.5">
+								<span className="text-muted-foreground">Packaging</span>
+								<span className="text-right font-medium">Plain, discreet packaging</span>
+							</li>
+							<li className="flex items-center justify-between gap-4 py-2.5">
+								<span className="text-muted-foreground">Returns</span>
+								<span className="text-right font-medium">30-day returns on unopened items</span>
+							</li>
+							<li className="flex items-center justify-between gap-4 py-2.5">
+								<span className="text-muted-foreground">Age</span>
+								<span className="text-right font-medium">18+ only · ID at collection</span>
+							</li>
+						</ul>
+
 						{layout.attributesPlacement === "info" && <div className="order-4 mt-6">{slots.attributes}</div>}
 					</div>
 
