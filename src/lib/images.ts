@@ -11,11 +11,13 @@ export const FEATURED_COLLECTION_IMAGE_SIZES =
 	"(max-width: 1024px) calc((100vw - 3rem) / 2), calc((min(100vw, 80rem) - 4rem - 4.5rem) / 4)";
 
 /**
- * PLP / collection / category grid: 2 col → 3 col (lg).
- * Accounts for px-4/px-8 padding and gap-4/gap-6 between cards.
+ * PLP / collection / category grid: 2 col → 4 col (lg).
+ * Accounts for 2rem horizontal padding each side and three 1.5rem gaps between cards.
+ * Keep in sync with ProductGrid's `desktopColumns` default (a stale `sizes` still looks
+ * right but fetches a wider variant than it renders).
  */
 export const PLP_IMAGE_SIZES =
-	"(max-width: 1024px) calc((100vw - 3rem) / 2), calc((min(100vw, 80rem) - 4rem - 3rem) / 3)";
+	"(max-width: 1024px) calc((100vw - 3rem) / 2), calc((min(100vw, 80rem) - 4rem - 4.5rem) / 4)";
 
 /**
  * Full-bleed hero background. `100vw` is honest here — the image really does span the

@@ -133,7 +133,9 @@ export async function POST(request: NextRequest) {
 	const receipt = formatOrderReceipt(order);
 	const result = await sendTelegram(receipt);
 
-	if (!result.ok) {
+	if (result.ok) {
+		console.info(`[order-created] Telegram sent for #${order.number}`);
+	} else {
 		// Never fail the webhook: Saleor would retry and we would spam logs. The order
 		// itself is safe in the Dashboard; the merchant can re-send manually.
 		console.warn(`[order-created] Telegram not sent: ${result.detail}`);

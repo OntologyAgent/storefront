@@ -3,7 +3,7 @@ import { productGridDesktopClassName, type ProductGridDesktopColumns } from "./p
 
 export function ProductsGridSkeleton({
 	className,
-	desktopColumns = 3,
+	desktopColumns = 4,
 	itemCount = 6,
 }: {
 	className?: string;

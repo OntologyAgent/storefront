@@ -19,7 +19,7 @@ type ProductGridProps = {
 export function ProductGrid({
 	products,
 	imageSizes = PLP_IMAGE_SIZES,
-	desktopColumns = 3,
+	desktopColumns = 4,
 }: ProductGridProps) {
 	return (
 		<div
