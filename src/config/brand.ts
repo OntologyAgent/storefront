@@ -15,16 +15,16 @@
 
 export const brandConfig = {
 	/** Site name used in titles, metadata, and headers */
-	siteName: "Lucky Tobacconist",
+	siteName: "tobaccolane.shop",
 
 	/** Legal entity name for copyright notices */
-	copyrightHolder: "Lucky Tobacconist",
+	copyrightHolder: "tobaccolane.shop",
 
 	/** Organization name for structured data (JSON-LD) */
-	organizationName: "Lucky Tobacconist",
+	organizationName: "tobaccolane.shop",
 
 	/** Default brand name for products without a brand */
-	defaultBrand: "Lucky Tobacconist",
+	defaultBrand: "tobaccolane.shop",
 
 	/** Tagline/description for the store */
 	tagline: "Cartons, menthol and vapes — free collection at 4 Sydney stores.",
@@ -34,10 +34,10 @@ export const brandConfig = {
 		"Factory-sealed cigarette cartons, menthol lines and disposable vapes. Discreet packaging and free collection at our 4 Sydney stores, 18+ only.",
 
 	/** Logo aria-label for accessibility */
-	logoAriaLabel: "Lucky Tobacconist",
+	logoAriaLabel: "tobaccolane.shop",
 
 	/** Title template - %s will be replaced with page title */
-	titleTemplate: "%s | Lucky Tobacconist",
+	titleTemplate: "%s | tobaccolane.shop",
 
 	/** Social media handles */
 	social: {

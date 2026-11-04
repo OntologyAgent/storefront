@@ -20,7 +20,7 @@ interface LogoProps {
 	inverted?: boolean;
 }
 
-export const Logo = ({ className, ariaLabel = "Lucky Tobacconist", inverted = false }: LogoProps) => {
+export const Logo = ({ className, ariaLabel = "tobaccolane.shop", inverted = false }: LogoProps) => {
 	const src = inverted ? "/brand-logo-dark.svg" : "/brand-logo.svg";
 
 	return (

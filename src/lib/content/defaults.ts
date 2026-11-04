@@ -54,7 +54,7 @@ export const defaultStorefrontContent = {
 			brandStory: {
 				heading: "An Australian tobacconist, online",
 				paragraphs: [
-					"Lucky Tobacconist supplies factory-sealed cartons, menthol lines and disposable vapes to adult smokers across Sydney. Every carton is sourced through established suppliers and stored in a temperature-controlled room before it is packed for collection.",
+					"tobaccolane.shop supplies factory-sealed cartons, menthol lines and disposable vapes to adult smokers across Sydney. Every carton is sourced through established suppliers and stored in a temperature-controlled room before it is packed for collection.",
 					"Every order is packed in plain, unbranded packaging and handed over the counter when you collect. Collection is always free — no minimum spend — and returns are accepted within {returnsWindowDays} days on unopened items.",
 				],
 			},

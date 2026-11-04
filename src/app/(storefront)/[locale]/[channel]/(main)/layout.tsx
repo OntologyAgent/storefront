@@ -11,7 +11,9 @@ import { AgeGate } from "@/ui/components/age-gate";
 // Define the title template here so it cascades to every browse page (products, search,
 // categories, …) — a plain-string title would not propagate the brand suffix to children.
 export const metadata: Metadata = {
-	title: { default: brandConfig.siteName, template: brandConfig.titleTemplate },
+	// Brand and domain are the same string, so a bare site name would render as
+	// "tobaccolane.shop | tobaccolane.shop". The default is a short line instead.
+	title: { default: "Cartons, menthol and vapes", template: brandConfig.titleTemplate },
 	description: brandConfig.description,
 };
 
