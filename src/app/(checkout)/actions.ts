@@ -210,10 +210,15 @@ const customerRegionDocument = toTypedDocument<
  * Guests get `null` and fall back to the cookie / default region.
  */
 export async function getCustomerPickupRegion(): Promise<string | null> {
-	const result = await sessionQuery(customerRegionDocument, { variables: {} });
-	if (!result.ok || !result.data?.me) return null;
-	const entry = result.data.me.metadata?.find((item) => item.key === "pickup_region");
-	return entry?.value ?? null;
+	try {
+		const result = await sessionQuery(customerRegionDocument, { variables: {} });
+		if (!result.ok || !result.data?.me) return null;
+		const entry = result.data.me.metadata?.find((item) => item.key === "pickup_region");
+		return entry?.value ?? null;
+	} catch {
+		// Guests have no session; a failed read must never block the pickup step.
+		return null;
+	}
 }
 
 export type CheckoutPickupPoint = {

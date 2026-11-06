@@ -74,20 +74,33 @@ export const ShippingStep: FC<ShippingStepProps> = ({
 			setSavedPickupId(result.selectedId);
 
 			// Region comes from the account (set at sign-up), then the cookie from a
-			// previous visit, then the default store. Checkout never asks again.
-			const accountRegion = await getCustomerPickupRegion();
+			// previous visit, then the default region. Checkout never asks again.
 			const rememberedRegion = readPickupPreference();
+			let accountRegion: string | null = null;
+			try {
+				accountRegion = await getCustomerPickupRegion();
+			} catch {
+				accountRegion = null;
+			}
 			const region = accountRegion ?? rememberedRegion ?? DEFAULT_PICKUP_REGION;
-			const isKnown = Boolean(accountRegion ?? rememberedRegion);
-			setRegionSlug(region);
-			setRegionKnown(isKnown);
+			setRegionKnown(Boolean(accountRegion ?? rememberedRegion));
 
-			if (!result.selectedId) {
-				const match =
-					result.points.find((point) => point.slug === region) ?? result.points[0] ?? null;
-				if (match) {
+			// Always settle on a point: the saved one if it still exists, else the region
+			// match, else the first one. A missing selection disables "Continue".
+			const savedStillValid = result.selectedId
+				? result.points.some((point) => point.id === result.selectedId)
+				: false;
+			const match =
+				result.points.find((point) => point.slug === region) ??
+				result.points.find((point) => point.id === result.selectedId) ??
+				result.points[0] ??
+				null;
+
+			if (match) {
+				setRegionSlug(match.slug ?? region);
+				if (!savedStillValid) {
 					setUserPickupId(match.id);
-					writePickupPreference(region);
+					writePickupPreference(match.slug ?? region);
 				}
 			}
 		})();

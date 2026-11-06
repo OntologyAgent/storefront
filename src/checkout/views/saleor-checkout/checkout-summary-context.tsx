@@ -85,7 +85,13 @@ export function buildShippingSummaryRows(
 ): SummaryRow[] {
 	return [
 		{ label: labels.contact, value: checkout.email || "", onChangeStep: 1 },
-		{ label: labels.shipTo, value: formatAddressLine(checkout.shippingAddress), onChangeStep: 1 },
+		{
+			label: labels.shipTo,
+			// Click & collect has no customer address until a warehouse is chosen; showing
+			// "—" reads like an error, so name the fulfilment instead.
+			value: formatAddressLine(checkout.shippingAddress) || "Collect in store",
+			onChangeStep: 1,
+		},
 	];
 }
 
@@ -98,7 +104,11 @@ export function buildPaymentSummaryRows(
 
 	if (checkout.isShippingRequired) {
 		rows.push(
-			{ label: labels.shipTo, value: formatAddressLine(checkout.shippingAddress), onChangeStep: 1 },
+			{
+				label: labels.shipTo,
+				value: formatAddressLine(checkout.shippingAddress) || "Collect in store",
+				onChangeStep: 1,
+			},
 			{ label: labels.method, value: formatShippingMethod(checkout), onChangeStep: 2 },
 		);
 	} else {
