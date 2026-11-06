@@ -5,6 +5,7 @@ import {
 	AddressValidationRulesDocument,
 	CheckoutAddPromoCodeDocument,
 	CheckoutCollectionPointsDocument,
+	CustomerPickupRegionDocument,
 	CheckoutBillingAddressUpdateDocument,
 	CheckoutCompleteDocument,
 	CheckoutCreateDocument,
@@ -39,6 +40,8 @@ import {
 	type CheckoutEmailUpdateMutation,
 	type CheckoutEmailUpdateMutationVariables,
 	type CheckoutCollectionPointsQuery,
+	type CustomerPickupRegionQuery,
+	type CustomerPickupRegionQueryVariables,
 	type CheckoutCollectionPointsQueryVariables,
 	type CheckoutMetadataUpdateMutation,
 	type CheckoutMetadataUpdateMutationVariables,
@@ -95,7 +98,7 @@ import { emitCommerceEvent } from "@/lib/analytics/emit.server";
 import { checkoutCreateContextMetadata } from "@/lib/commerce-context/checkout-create-context";
 import { graphqlLanguageCodeVariables } from "@/lib/graphql-locale";
 import { isAllowedRedirectUrl } from "@/lib/auth/validate-redirect-url";
-import { liveQuery, mutate, rawMutation } from "@/lib/saleor";
+import { liveQuery, mutate, rawMutation, sessionQuery } from "@/lib/saleor";
 import * as Checkout from "@/lib/checkout";
 import { saveCheckoutId } from "@/app/actions";
 import { setOrderViewCookie, signOrderViewToken } from "@/lib/order-view";
@@ -197,9 +200,26 @@ const userSetDefaultAddressDocument = toTypedDocument<
 	UserSetDefaultAddressMutationVariables
 >(UserSetDefaultAddressDocument);
 
+const customerRegionDocument = toTypedDocument<
+	CustomerPickupRegionQuery,
+	CustomerPickupRegionQueryVariables
+>(CustomerPickupRegionDocument);
+
+/**
+ * The pickup region saved on the signed-in customer, if any.
+ * Guests get `null` and fall back to the cookie / default region.
+ */
+export async function getCustomerPickupRegion(): Promise<string | null> {
+	const result = await sessionQuery(customerRegionDocument, { variables: {} });
+	if (!result.ok || !result.data?.me) return null;
+	const entry = result.data.me.metadata?.find((item) => item.key === "pickup_region");
+	return entry?.value ?? null;
+}
+
 export type CheckoutPickupPoint = {
 	id: string;
 	name: string;
+	slug: string | null;
 	address: {
 		streetAddress1: string | null;
 		city: string | null;

@@ -11,6 +11,7 @@ import { Label } from "@/ui/components/ui/label";
 import { buildAccountConfirmationRedirectUrl } from "@/lib/auth/account-confirmation-url";
 import { buildStorefrontPath } from "@/lib/storefront-path";
 import { cn } from "@/lib/utils";
+import { DEFAULT_PICKUP_REGION, PICKUP_REGIONS } from "@/checkout/lib/regions";
 
 export function SignUpForm() {
 	const t = useTranslations("account");
@@ -21,6 +22,8 @@ export function SignUpForm() {
 	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");
 	const [confirmPassword, setConfirmPassword] = useState("");
+	// Pickup region is chosen once, at sign-up; checkout never asks again.
+	const [pickupRegion, setPickupRegion] = useState<string>(DEFAULT_PICKUP_REGION);
 	const [showPassword, setShowPassword] = useState(false);
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [error, setError] = useState("");
@@ -58,6 +61,7 @@ export function SignUpForm() {
 					password,
 					firstName,
 					lastName,
+					pickupRegion,
 					channel: params.channel,
 					redirectUrl: buildAccountConfirmationRedirectUrl(
 						window.location.origin,
@@ -248,6 +252,31 @@ export function SignUpForm() {
 						{confirmPassword && password !== confirmPassword && (
 							<p className="text-sm text-destructive">{t("errors.passwordsMismatch")}</p>
 						)}
+					</div>
+
+					<div className="space-y-1.5">
+						<Label htmlFor="pickupRegion" className="text-sm font-medium">
+							Pickup region
+						</Label>
+						<select
+							id="pickupRegion"
+							name="pickupRegion"
+							value={pickupRegion}
+							onChange={(event) => setPickupRegion(event.target.value)}
+							className={cn(
+								"h-12 w-full rounded-md border border-border bg-background px-3 text-sm",
+								"focus:outline-none focus:ring-2 focus:ring-foreground focus:ring-offset-2",
+							)}
+						>
+							{PICKUP_REGIONS.map((region) => (
+								<option key={region.slug} value={region.slug}>
+									{region.label}
+								</option>
+							))}
+						</select>
+						<p className="text-xs text-muted-foreground">
+							Orders are collected from this area. You can change it later in account settings.
+						</p>
 					</div>
 
 					<Button type="submit" disabled={isSubmitting} className="h-12 w-full text-base font-semibold">

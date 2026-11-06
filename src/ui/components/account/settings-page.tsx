@@ -7,6 +7,7 @@ import { resolveLocaleFromSlug } from "@/config/locale";
 import { EditNameForm } from "@/ui/components/account/edit-name-form";
 import { ChangePasswordForm } from "@/ui/components/account/change-password-form";
 import { DeleteAccountSection } from "@/ui/components/account/delete-account-section";
+import { PickupRegionForm } from "@/ui/components/account/pickup-region-form";
 import { useAccountUser } from "@/ui/components/account/account-context";
 
 export function AccountSettingsPage() {
@@ -43,6 +44,10 @@ export function AccountSettingsPage() {
 
 				<div className="p-4 sm:p-6">
 					<EditNameForm firstName={user.firstName} lastName={user.lastName} />
+				</div>
+
+				<div className="p-4 sm:p-6">
+					<PickupRegionForm metadata={user.metadata ?? []} />
 				</div>
 
 				<div className="p-4 sm:p-6">

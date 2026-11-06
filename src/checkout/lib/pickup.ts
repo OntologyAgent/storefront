@@ -14,6 +14,7 @@ export const PICKUP_ONLY = true;
 export type PickupPoint = {
 	id: string;
 	name: string;
+	slug?: string | null;
 	address: {
 		streetAddress1?: string | null;
 		city?: string | null;

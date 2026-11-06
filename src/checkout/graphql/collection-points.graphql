@@ -4,6 +4,7 @@ query CheckoutCollectionPoints($id: ID!) {
 		availableCollectionPoints {
 			id
 			name
+			slug
 			address {
 				streetAddress1
 				city

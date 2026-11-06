@@ -40,6 +40,29 @@ export async function updateProfile(formData: FormData): Promise<AccountActionRe
 	return { success: true };
 }
 
+/** Saves the pickup region (warehouse slug) on the customer. */
+export async function updatePickupRegion(formData: FormData): Promise<AccountActionResult> {
+	const region = getFormString(formData, "pickupRegion");
+
+	const result = await mutate(AccountUpdateDocument, {
+		variables: { input: { metadata: [{ key: "pickup_region", value: region }] } },
+	});
+
+	if (!result.ok) {
+		return { success: false, error: result.error.message };
+	}
+
+	const errors = result.data.accountUpdate?.errors;
+	if (errors?.length) {
+		return errors[0].message
+			? { success: false, error: errors[0].message }
+			: { success: false, errorKey: "updateProfileFailed" };
+	}
+
+	revalidateAccountLayout();
+	return { success: true };
+}
+
 export async function changePassword(formData: FormData): Promise<AccountActionResult> {
 	const oldPassword = getFormString(formData, "oldPassword");
 	const newPassword = getFormString(formData, "newPassword");

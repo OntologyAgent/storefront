@@ -6,6 +6,7 @@ import { Button } from "@/ui/components/ui/button";
 import { cn } from "@/lib/utils";
 import {
 	getCheckoutCollectionPoints,
+	getCustomerPickupRegion,
 	setPickupBillingAddress,
 	updateCheckoutDeliveryMethod,
 } from "@/app/(checkout)/actions";
@@ -26,8 +27,10 @@ import { MobileStickyAction } from "./mobile-sticky-action";
 import { useCheckoutStepNumber } from "@/checkout/hooks/use-checkout-steps";
 import { useTranslations } from "next-intl";
 import { useEffect } from "react";
-import { PICKUP_ONLY, formatPickupAddress, type PickupPoint } from "@/checkout/lib/pickup";
+import { PICKUP_ONLY, type PickupPoint } from "@/checkout/lib/pickup";
 import { readPickupPreference, writePickupPreference } from "@/checkout/lib/pickup-preference";
+import { DEFAULT_PICKUP_REGION, PICKUP_REGIONS } from "@/checkout/lib/regions";
+import { LinkWithChannel } from "@/ui/atoms/link-with-channel";
 import { readPickupCustomerName } from "@/checkout/lib/pickup-customer";
 
 interface ShippingStepProps {
@@ -57,6 +60,8 @@ export const ShippingStep: FC<ShippingStepProps> = ({
 	const savedDeliveryId = checkout.delivery?.id;
 	const [collectionPoints, setCollectionPoints] = useState<PickupPoint[]>([]);
 	const [savedPickupId, setSavedPickupId] = useState<string | null>(null);
+	const [regionSlug, setRegionSlug] = useState<string | null>(null);
+	const [regionKnown, setRegionKnown] = useState(false);
 	const hasPickup = collectionPoints.length > 0;
 	const pickupOnly = PICKUP_ONLY && hasPickup;
 
@@ -67,11 +72,22 @@ export const ShippingStep: FC<ShippingStepProps> = ({
 			if (cancelled || !result.ok) return;
 			setCollectionPoints(result.points);
 			setSavedPickupId(result.selectedId);
-			// No store chosen on this checkout yet → preselect the last one they used.
+
+			// Region comes from the account (set at sign-up), then the cookie from a
+			// previous visit, then the default store. Checkout never asks again.
+			const accountRegion = await getCustomerPickupRegion();
+			const rememberedRegion = readPickupPreference();
+			const region = accountRegion ?? rememberedRegion ?? DEFAULT_PICKUP_REGION;
+			const isKnown = Boolean(accountRegion ?? rememberedRegion);
+			setRegionSlug(region);
+			setRegionKnown(isKnown);
+
 			if (!result.selectedId) {
-				const remembered = readPickupPreference();
-				if (remembered && result.points.some((point) => point.id === remembered)) {
-					setUserPickupId(remembered);
+				const match =
+					result.points.find((point) => point.slug === region) ?? result.points[0] ?? null;
+				if (match) {
+					setUserPickupId(match.id);
+					writePickupPreference(region);
 				}
 			}
 		})();
@@ -215,51 +231,52 @@ export const ShippingStep: FC<ShippingStepProps> = ({
 			{hasPickup ? (
 				<section className="space-y-4">
 					<h2 className="text-lg font-semibold">Collect in store</h2>
-					<p className="text-sm text-muted-foreground">
-						Free. We email you as soon as your order is packed — bring photo ID that matches the order name.
-					</p>
 
 					{error ? <p className="text-sm text-destructive">{error}</p> : null}
 
-					<div className={cn("space-y-3", isSubmitting && "pointer-events-none opacity-60")}>
-						{collectionPoints.map((point) => {
-							const isSelected = selectedPickupId === point.id;
-							return (
-								<label
-									key={point.id}
-									className={cn(
-										"flex cursor-pointer items-center gap-4 rounded-lg border p-4 transition-colors",
-										"focus-within:ring-2 focus-within:ring-foreground focus-within:ring-offset-2",
-										isSelected
-											? "border-foreground bg-secondary/50"
-											: "border-border hover:border-muted-foreground/50",
-									)}
-								>
-									<input
-										type="radio"
-										name="pickup"
-										value={point.id}
-										checked={isSelected}
-										onChange={() => {
-											setUserPickupId(point.id);
-											setUserSelectedMethod(undefined);
-											setError(null);
-											writePickupPreference(point.id);
-										}}
-										className="sr-only"
-									/>
-									<Store className="h-5 w-5 shrink-0 text-muted-foreground" aria-hidden="true" />
-									<span className="min-w-0 flex-1">
-										<span className="block font-medium text-foreground">{point.name}</span>
-										<span className="block text-sm text-muted-foreground">
-											{formatPickupAddress(point.address)}
-										</span>
-									</span>
-									<span className="font-medium text-green-600">Free</span>
-								</label>
-							);
-						})}
+					<div className="rounded-lg border border-foreground/20 bg-secondary/40 p-4">
+						<div className="flex items-start gap-3">
+							<Store className="mt-0.5 h-5 w-5 shrink-0 text-muted-foreground" aria-hidden="true" />
+							<div className="min-w-0 flex-1">
+								<p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+									Your pickup region
+								</p>
+								<p className="mt-1 text-xl font-semibold">
+									{collectionPoints.find((point) => point.id === selectedPickupId)?.name ??
+										PICKUP_REGIONS.find((region) => region.slug === regionSlug)?.label ??
+										"—"}
+								</p>
+								<p className="mt-2 text-sm text-muted-foreground">
+									Free collection. We email you when the order is packed — bring photo ID that matches
+									the order name.
+								</p>
+							</div>
+							<span className="font-medium text-green-600">Free</span>
+						</div>
 					</div>
+
+					<p className="text-sm text-muted-foreground">
+						{regionKnown ? (
+							<>
+								Pickup region is set in your account.{" "}
+								<LinkWithChannel href="/account/settings" className="underline underline-offset-4">
+									Change region
+								</LinkWithChannel>
+							</>
+						) : (
+							<>
+								Using the default region.{" "}
+								<LinkWithChannel href="/signup" className="underline underline-offset-4">
+									Sign up
+								</LinkWithChannel>{" "}
+								or{" "}
+								<LinkWithChannel href="/login" className="underline underline-offset-4">
+									sign in
+								</LinkWithChannel>{" "}
+								to choose your own.
+							</>
+						)}
+					</p>
 				</section>
 			) : null}
 

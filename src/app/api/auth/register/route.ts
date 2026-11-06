@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { rejectIfRateLimited } from "@/lib/auth/auth-rate-limit";
 import { isAllowedRedirectUrl } from "@/lib/auth/validate-redirect-url";
-import { rawMutation, asValidationError, getUserMessage } from "@/lib/saleor";
+import { rawMutation, asValidationError, getUserMessage, mutate } from "@/lib/saleor";
+import { signInWithPassword } from "@/lib/auth/bff-server";
+import { AccountUpdateDocument } from "@/gql/graphql";
+import { isPickupRegionSlug } from "@/checkout/lib/regions";
 
 const REGISTER_MUTATION = `
   mutation AccountRegister($input: AccountRegisterInput!) {
@@ -24,6 +27,8 @@ interface RegisterRequest {
 	password: string;
 	firstName?: string;
 	lastName?: string;
+	/** Pickup region slug chosen at sign-up (see checkout/lib/regions). */
+	pickupRegion?: string;
 	channel: string;
 	redirectUrl: string;
 }
@@ -51,7 +56,7 @@ export async function POST(request: NextRequest) {
 		);
 	}
 
-	const { email, password, firstName, lastName, channel, redirectUrl } = body;
+	const { email, password, firstName, lastName, pickupRegion, channel, redirectUrl } = body;
 
 	if (!email || !password) {
 		return NextResponse.json(
@@ -105,6 +110,24 @@ export async function POST(request: NextRequest) {
 	if (accountRegister?.errors?.length) {
 		const validationResult = asValidationError(accountRegister.errors);
 		return NextResponse.json({ errors: validationResult.error.validationErrors }, { status: 400 });
+	}
+
+	// Persist the pickup region on the new customer. This needs a session, so sign in
+	// once and write the metadata — otherwise the customer has to set it by hand later.
+	const region = isPickupRegionSlug(pickupRegion) ? pickupRegion : null;
+	if (region) {
+		try {
+			const signIn = await signInWithPassword(email, password);
+			if (signIn.ok) {
+				await mutate(AccountUpdateDocument, {
+					variables: { input: { metadata: [{ key: "pickup_region", value: region }] } },
+				});
+			}
+		} catch (error) {
+			// Registration already succeeded; a missing region only means the customer
+			// picks it later from account settings.
+			console.warn("Failed to store pickup region:", error);
+		}
 	}
 
 	// Success
